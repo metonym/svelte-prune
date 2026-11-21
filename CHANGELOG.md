@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+**Features**
+
+- The usage a sibling plugin reads (`siblingAnalysis`) has `loadable(key)`,
+  for `libraryStylePruner`'s `loadable`: without it, every custom property
+  a library source builds stays.
+- A token `classTokens` reads that ends in `:` is a prefix, like one ending
+  in `-`: `x--lg:` in `` `x--lg:${span}` `` keeps every `x--lg:…` class,
+  for libraries whose classes hold a colon (Carbon's CSS Grid columns).
+
+**Fixes**
+
+- A class the app's files build from a prefix (`class="x--tag--{color}"`)
+  is kept, with every class starting with it. Pruning read the prefix as
+  one exact class name, so `.x--tag--red` could go though the app renders
+  it.
+
 ## 0.12.0
 
 **Features**

@@ -16,6 +16,7 @@ import {
   type ClassTokens,
   classTokensOf,
   type LibraryPaths,
+  isPrefixToken,
 } from "./library-paths";
 import { type CallSite, listens } from "./usage";
 import {
@@ -65,7 +66,7 @@ function addTokens(text: string, result: Walk): void {
   const { tokens } = result;
   if (!tokens || !text.includes(tokens.marker)) return;
   for (const token of tokens.text(text)) {
-    if (token.endsWith("-")) result.prefixes.add(token);
+    if (isPrefixToken(token)) result.prefixes.add(token);
     else result.classes.add(token);
   }
 }

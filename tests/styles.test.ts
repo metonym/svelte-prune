@@ -139,6 +139,42 @@ describe("pruneStyles", () => {
     expect(kept).toContain(".btn-lg");
   });
 
+  test("keeps every class starting with a prefix the app's files build", async () => {
+    const kept = await pruned(
+      '<div class="alert-{tone}">x</div><Button />',
+      "export let tone;",
+    );
+    expect(kept).toContain(".alert-danger");
+  });
+
+  test("reads a token ending in `:` as a prefix", async () => {
+    const css = ".my-col { a: 1 }\n.my-lg\\:4 { a: 2 }\n.my-sm\\:4 { a: 3 }";
+    const kept = rules(
+      await prunedStyles(
+        {
+          lib: {
+            "Col.svelte": `<script>export let lg = undefined;</script>
+<div class="my-col my-lg:{lg}"></div>`,
+          },
+          app: appRendering("<Col lg={span} />", "export let span;"),
+        },
+        css,
+        {
+          classTokens: {
+            marker: "my-",
+            text: (text) =>
+              Array.from(
+                text.matchAll(/my-[\w-]+(?::[\w-]*)?/g),
+                ([token]) => `.${token}`,
+              ),
+            script() {},
+          },
+        },
+      ),
+    );
+    expect(kept).toEqual([".my-col", ".my-lg\\:4"]);
+  });
+
   test("keeps `keep` and `safelist`, and classes it doesn't define", async () => {
     const kept = await pruned("<Button />", "", {
       keep: ["alert"],

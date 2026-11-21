@@ -702,6 +702,8 @@ describe("svelte-prune/vite", () => {
       expect(analysis.usage.isPruned(".bx--btn--tertiary")).toBe(false);
       expect(analysis.usage.isPruned(".bx--btn--danger")).toBe(true);
       expect([...analysis.usage.liveComponents]).toContain("Button");
+      expect(analysis.usage.loadable("Button/Button.svelte")).toBe(true);
+      expect(analysis.usage.loadable("Modal/Modal.svelte")).toBe(false);
       expect(
         analysis.usage.report(new Set([".bx--btn--danger"]), project.root),
       ).toContain("  Prop-aware:");

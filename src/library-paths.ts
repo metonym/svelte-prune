@@ -12,6 +12,17 @@ export type LibraryClassTokens = ClassTokens & {
 };
 
 const CLASS_TOKEN = /[\w-]+/g;
+/** A token that ends where a name is joined on: `x--btn--`, `x--lg:`. */
+const PREFIX_TOKEN = /[-:]$/;
+
+/**
+ * Whether a token `classTokens` read is a prefix code builds class names
+ * from (`` `x--btn--${kind}` ``, `` `x--lg:${span}` ``): every class
+ * starting with it may render.
+ */
+export function isPrefixToken(token: string): boolean {
+  return PREFIX_TOKEN.test(token);
+}
 
 /** For a library with `styles` and no `classTokens`: every word, as a class. */
 const PLAIN_CLASS_TOKENS: LibraryClassTokens = {
@@ -48,8 +59,9 @@ export type LibrarySpec = {
   tool: string;
   /**
    * Reads class names, for pruning the library's styles: `text` a string
-   * containing `marker`, `script` a whole script module. Omit to read none,
-   * or, with `styles`, every run of word characters and hyphens.
+   * containing `marker`, `script` a whole script module. A token ending in
+   * `-` or `:` is a prefix code builds names from. Omit to read none, or,
+   * with `styles`, every run of word characters and hyphens.
    */
   classTokens?: LibraryClassTokens;
   /**

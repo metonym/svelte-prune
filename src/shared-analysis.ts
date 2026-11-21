@@ -8,6 +8,11 @@ export type RenderedUsage = {
   /** Whether no live component can apply class `cls` (`.x--btn--danger`). */
   isPruned(cls: string): boolean;
   /**
+   * Whether library module `key` (`utils/x.js`, from `srcDir`) can load,
+   * for `libraryStylePruner`'s `loadable`.
+   */
+  loadable(key: string): boolean;
+  /**
    * The report's lines for each call site's prop values, and how many of
    * `prunedClasses` (the classes pruning removed because of them) there are.
    */

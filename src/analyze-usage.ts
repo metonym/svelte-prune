@@ -23,7 +23,7 @@ import {
   type Scope,
 } from "./evaluate";
 import type { Library } from "./library";
-import { classTokensOf } from "./library-paths";
+import { classTokensOf, isPrefixToken } from "./library-paths";
 import { type LiveResult, walkLive } from "./live-walk";
 import { listJsAndSvelteFiles, packageSignature } from "./package";
 import {
@@ -761,7 +761,7 @@ export async function analyzeUsage(input: {
     }
     scripts = {
       tokens,
-      prefixes: [...tokens].filter((token) => token.endsWith("-")),
+      prefixes: [...tokens].filter(isPrefixToken),
     };
     return scripts;
   };

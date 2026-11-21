@@ -489,6 +489,7 @@ export async function specializeFiles(input: {
     usage: {
       liveComponents: result.liveComponents,
       isPruned: result.isPruned,
+      loadable: result.analysis.loadable,
       report: (prunedClasses, root) =>
         formatPropAwareReport(result, prunedClasses, root),
     },
