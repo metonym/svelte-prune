@@ -124,8 +124,13 @@ type ExternalReads = {
 };
 
 const WORD = /[\w-]+/g;
-/** `--tone-` before `${…}` or a quote and `+`: a name built at runtime. */
-const BUILT_PROPERTY = /(--[\w-]*)(?:\$\{|["'`]\s*\+)/g;
+/**
+ * `--tone-` before `${…}` or a quote and `+`: a name built at runtime. Not
+ * after a word character, `-` or `!`: that's the end of a class
+ * (`` `x--btn--${kind}` ``) or an HTML comment (`` `<!--${id}-->` ``, which
+ * Svelte's server runtime writes), not a property name.
+ */
+const BUILT_PROPERTY = /(?<![\w!-])(--[\w-]*)(?:\$\{|["'`]\s*\+)/g;
 
 /** Adds what `code` may read to `into`. */
 function readsIn(code: string, into: ExternalReads): void {

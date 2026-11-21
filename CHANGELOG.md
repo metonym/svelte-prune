@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+**Fixes**
+
+- `libraryStylePruner` no longer reads an HTML comment written from a
+  template (`` `<!--${id}-->` ``, as Svelte's server runtime does) or a
+  class built from one (`` `x--${size}` ``) as code that builds custom
+  property names from `--`, which kept every custom property the library
+  defines. A file passing it the modules a bundler transformed, as
+  carbon-preprocess-svelte does, kept all of Carbon's tokens in SvelteKit
+  server builds.
+
 ## 0.13.0
 
 **Features**
