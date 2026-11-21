@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+**Fixes**
+
+- `svelte-prune/internal`'s `libraryImports` takes the bundler's module
+  graph again (`getModuleIds`, `getModuleInfo`). 0.12.0 and 0.12.1
+  declared it with an unrelated type of the same name, so a caller passing
+  a Rollup or Vite plugin context failed to type-check. The build now
+  fails when two declarations a public entry needs share a name.
+
 ## 0.12.1
 
 **Features**
