@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+**Features**
+
+- `hydration: false`, for an app that only mounts: the Vite plugin
+  removes Svelte 5's hydration code from its client runtime, 1.8% to 4.7%
+  of the examples' gzipped JS on top of svelte-prune. A build whose output
+  can still call `hydrate()` fails (SvelteKit with SSR, `hydrate` from
+  `svelte`, `svelte/legacy`'s class components). Svelte 3 and 4 and the
+  webpack plugin ignore it, with a warning.
+
 ## 0.12.2
 
 **Fixes**

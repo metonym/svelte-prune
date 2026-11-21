@@ -4,14 +4,18 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import { compile } from "svelte/compiler";
 import type { SveltePruneOptions } from "../src/optimizer";
+import { hydrateRemoved } from "../src/runtime";
 import { siblingAnalysis } from "../src/shared-analysis";
 import { sveltePrune } from "../src/vite";
 import { CARBON } from "./helpers/carbon";
 import { createFakeProject } from "./helpers/fake-project";
+import { resolvePackageRoot } from "./helpers/resolve-package-root";
 import { installTableLibrary, TVLIB } from "./helpers/tailwind-variants";
 
 type Context = {
@@ -89,6 +93,9 @@ const UNREAD_MODAL =
 const UNREAD_BARREL =
   /can't read how src[\\/]Other\.svelte imports `carbon-components-svelte`/;
 const UNREAD_ALIAS = /can't read how src[\\/]App\.svelte imports `@carbon`/;
+const HYDRATING =
+  /removed Svelte's hydration code \(`hydration: false`\), but assets[\\/]main-\w+\.js can still call hydrate\(\)/;
+const HYDRATION_IGNORED = /ignored `hydration: false`: Svelte 4/;
 const TABLES_REWRITTEN =
   /^rewrote 1 TvLib components and 1 tailwind-variants tables for this app/;
 const TABLE_IMPORTED =
@@ -878,6 +885,81 @@ describe("svelte-prune/vite", () => {
       expect(readFileSync(path.join(written, "theme.js"), "utf8")).toContain(
         "bg-red",
       );
+    } finally {
+      project.dispose();
+    }
+  });
+});
+
+describe("svelte-prune/vite with `hydration: false`", () => {
+  const MOUNT = `import { mount } from "svelte";\nimport App from "./App.js";\nmount(App, { target: document.body });`;
+  const HYDRATE = MOUNT.replaceAll("mount", "hydrate");
+  // Blocks are what set `hydrating` as they render.
+  const APP = compile(
+    `<script>let items = $state([1, 2]);</script>\n{#each items as item}{#if item > 1}<b>{item}</b>{:else}<i>{item}</i>{/if}{/each}`,
+    { generate: "client" },
+  ).js.code;
+
+  /** A real Vite build of `main` (and Svelte's client runtime) with svelte-prune. */
+  async function viteBuild(main: string, options: SveltePruneOptions) {
+    const { build } = await import("vite");
+    const project = createFakeProject();
+    project.linkCarbon();
+    symlinkSync(
+      resolvePackageRoot("svelte"),
+      path.join(project.root, "node_modules", "svelte"),
+      "dir",
+    );
+    mkdirSync(path.join(project.root, "src"));
+    const entry = path.join(project.root, "src", "main.js");
+    writeFileSync(entry, main);
+    writeFileSync(path.join(project.root, "src", "App.js"), APP);
+    try {
+      const output = await build({
+        root: project.root,
+        configFile: false,
+        logLevel: "silent",
+        plugins: [sveltePrune(CARBON, { silent: true, ...options })],
+        build: { write: false, rollupOptions: { input: entry } },
+      });
+      const [{ output: files }] = [output].flat() as Array<{
+        output: Array<{ type: string; code?: string }>;
+      }>;
+      return files.map((file) => file.code ?? "").join("\n");
+    } finally {
+      project.dispose();
+    }
+  }
+
+  test("removes Svelte's hydration code from an app that only mounts", async () => {
+    const kept = await viteBuild(MOUNT, {});
+    const pruned = await viteBuild(MOUNT, { hydration: false });
+    expect(pruned.length).toBeLessThan(kept.length);
+    expect(pruned).not.toContain(hydrateRemoved("svelte-prune"));
+  });
+
+  test("fails the build when the app can still hydrate", async () => {
+    expect(typeof (await viteBuild(HYDRATE, {}))).toBe("string");
+    await expect(viteBuild(HYDRATE, { hydration: false })).rejects.toThrow(
+      HYDRATING,
+    );
+  });
+
+  test("is ignored, with a warning, before Svelte 5", async () => {
+    const { project, plugin } = setUp(
+      `<script>${IMPORT_BUTTON}</script>\n<Button>Save</Button>`,
+      { hydration: false },
+    );
+    try {
+      const svelte = path.join(project.root, "node_modules", "svelte");
+      mkdirSync(svelte);
+      writeFileSync(
+        path.join(svelte, "package.json"),
+        JSON.stringify({ name: "svelte", version: "4.2.19" }),
+      );
+      const ctx = context();
+      await plugin.buildStart.call(ctx);
+      expect(ctx.warn.mock.calls[0][0]).toMatch(HYDRATION_IGNORED);
     } finally {
       project.dispose();
     }

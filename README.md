@@ -181,6 +181,8 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
 -.btn-danger:hover { background: darkred; }
 ```
 
+**Svelte's hydration code**, for an app that only mounts, with `hydration: false` ([Hydration](#hydration)).
+
 ## Usage
 
 ### Vite, Rollup and Rolldown
@@ -254,6 +256,28 @@ classTokens: {
 ```
 
 Once those rules are gone, the custom properties (`--x`) and `@keyframes` the stylesheets define go too when nothing reads them: no `var()` or animation left in the emitted CSS, and no file in `content` or source of the library naming them (a script may read one, or build its name, as in `` `--tone-${t}` ``, which keeps every `--tone-` property). Only a class those tokens can read is ever removed. Classes the app builds from data at runtime are the one thing it can't see: list them, or a RegExp for their selectors, in `safelist`.
+
+### Hydration
+
+An app that renders in the browser only (`mount()`, no server-rendered HTML to pick up) can pass `hydration: false` to the Vite plugin:
+
+```ts
+sveltePrune(library, { hydration: false });
+```
+
+Svelte 5's client runtime guards its hydration code with a variable a bundler can't prove is always `false`, so every app ships it. With `hydration: false` it becomes a constant, and `hydrate()` throws before it runs, so the minifier drops both. On the [examples](examples/README.md), on top of svelte-prune, gzipped:
+
+| Library                       | JS smaller by |
+| :---------------------------- | :------------ |
+| @sveltestrap/sveltestrap      | 4.7%          |
+| bits-ui                       | 3.5%          |
+| @skeletonlabs/skeleton-svelte | 3.2%          |
+| svelte-5-ui-lib               | 2.8%          |
+| flowbite-svelte               | 2.7%          |
+| svelte-ux                     | 2.1%          |
+| carbon-components-svelte      | 1.8%          |
+
+Each page behaves identically in Chromium both ways. A build whose output can still reach `hydrate()` fails: SvelteKit with SSR, `hydrate` imported from `svelte`, or a class component from `svelte/legacy` (`new App({ hydrate: true })`). Svelte 3 and 4 bundle hydration code only for components compiled with `hydratable`, so they ignore it, with a warning. So does the webpack plugin: webpack bundles Svelte's custom element class, and through it `hydrate()`, whatever the app calls, so no build could show the app never hydrates.
 
 ## API reference
 
@@ -331,6 +355,7 @@ Describes the library to rewrite. Every field but `classTokens`, `styles` and `t
 | `silent`   | `false`                                                                | Skip the per-build summary (`rewrote N My Library components for this app (M edits)`).                                                                                                                                                                                                                                                                               |
 | `report`   | `false`                                                                | Print what each build rewrote: edits per component, the children it no longer renders, the components no longer bundled, and the values each call site passes (or why it keeps every value). Independent of `silent`.                                                                                                                                                |
 | `safelist` | `[]`                                                                   | Selectors of the library's stylesheets to keep whatever renders, for classes the app builds from data at runtime: a class (`"x--tag--red"`, with or without its `.`) keeps every selector it's in, a RegExp every selector it matches (`/^\.x--tag--/`). Only with `styles`.                                                                                         |
+| `hydration` | `true`                                                                | `false` for an app that only mounts, never hydrating server-rendered HTML: Svelte 5's client runtime loses its hydration code, and a build whose output can still call `hydrate()` fails. Vite, Rollup and Rolldown only. See [Hydration](#hydration).                                                                                                               |
 
 ### `names`
 
@@ -411,12 +436,14 @@ else
 Every message starts with `` `${tool}:` ``.
 
 - **Warning** (the build continues, nothing rewritten): `could not analyze this build (…)`, when the analysis throws, for example because the library isn't installed.
+- **Warnings** for `hydration: false` (the build continues with Svelte's hydration code): `ignored \`hydration: false\``, on Svelte 3 and 4 and under webpack and Rspack; `left Svelte's hydration code in this build`, when the installed Svelte's runtime isn't one it can rewrite.
 - **Errors** (the build fails), when components were rewritten without a call site:
   - a file outside `content` imports the library: add it to `content`;
   - an analyzed file imports the library through an alias the analysis can't read (`import { Button } from "@lib"`): import it from the package name;
   - a virtual module (no file on disk) imports the library: import it from a file in `content`;
   - a module outside `content` renders an app component whose props were read from its call sites: add it to `content`;
   - a module outside the library imports one of its script modules whose tailwind-variants tables were rewritten (through an alias, for example): import them from the package name.
+- **Error** with `hydration: false`, when the output can still call `hydrate()` (SvelteKit with SSR, `hydrate` from `svelte`, a class component from `svelte/legacy`): mount the app with `mount()`, or remove the option.
 
 ## What it reads
 
@@ -504,6 +531,8 @@ A snippet handed to a component, or used as a component's content, keeps its par
 - A tailwind-variants table keeps every key when something other than a live component's call can read it: the app imports it, another table extends it, a script module reads it, a namespace or `import()` reaches it, or a component hands on what a call with slots returns. A variant whose value at some call the analysis can't evaluate (a spread, a function's parameter) keeps every key. A table nothing calls is emptied only when nothing else can read it, and a script module that mounts a component keeps every table whole.
 
 - A stylesheet rule stays unless it needs a class the library's stylesheets define, its `classTokens` can read, and nothing can render: no live component under the app's props, no script module of the library, no file in `content`, nothing in `keep` or `safelist`. The examples check that no selector whose classes all appear on the rendered page goes missing.
+
+- With `hydration: false`, Svelte's runtime is rewritten only when both of its modules are exactly as expected, and the build fails if `hydrate()` survives bundling: an output that can reach it is one that may hydrate.
 
 The app's own components are rewritten too, when every file that renders them is in `content`: a wrapper's props come from its call sites, so `<Card tone="danger">` reaches the `Button` inside it.
 
