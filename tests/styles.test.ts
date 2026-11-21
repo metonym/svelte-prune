@@ -204,12 +204,15 @@ describe("pruneStyles", () => {
 
 const VAR_LIBRARY = {
   "Button.svelte": `<script>
+  import { toneVar } from "./theme.js";
   export let busy = false;
   const tone = "x";
   const read = () => getComputedStyle(document.body).getPropertyValue("--lib-script");
 </script>
 <button class="btn {busy ? 'btn-busy' : ''}" style="--lib-set: 1">{read}</button>`,
   "theme.js": "export const toneVar = (tone) => `--lib-tone-${tone}`;",
+  // Nothing imports it, so the names it builds can't be read or set.
+  "orphan.js": "export const orphanVar = (name) => `--lib-orphan-${name}`;",
 };
 
 const VAR_CSS = `:root {
@@ -220,6 +223,7 @@ const VAR_CSS = `:root {
   --lib-script: 1px;
   --lib-tone-a: 1;
   --lib-app: 2;
+  --lib-orphan-a: 3;
 }
 .btn { color: var(--lib-used); animation: pulse 1s; }
 .btn-busy { color: var(--lib-chain); animation: spin 1s; }
@@ -253,6 +257,7 @@ describe("custom properties and keyframes", () => {
     expect(css).not.toContain("@keyframes spin");
     expect(css).not.toContain("--lib-unused");
     expect(css).not.toContain("@keyframes fade");
+    expect(css).not.toContain("--lib-orphan-a");
   });
 
   test("stay when a rule that renders reads them", async () => {

@@ -328,6 +328,11 @@ export function libraryStylePruner(input: {
   spec: LibrarySpec;
   projectRoot: string;
   isPruned: (cls: string) => boolean;
+  /**
+   * Whether a library module (`utils/x.js`, from `srcDir`) can load. Only
+   * those may read or set a custom property or keyframes; by default, all.
+   */
+  loadable?: (key: string) => boolean;
   /** Files whose class names stay: the app's, as `content` reads them. */
   files: Iterable<{ code: string }>;
   safelist?: readonly SafelistEntry[];
@@ -344,7 +349,9 @@ export function libraryStylePruner(input: {
   // sources name stay: a script may read or set them.
   const external: ExternalReads = { words: new Set(), propertyPrefixes: [] };
   for (const { code } of input.files) readsIn(code, external);
-  for (const code of librarySources(spec, projectRoot)) readsIn(code, external);
+  for (const code of librarySources(spec, projectRoot, input.loadable)) {
+    readsIn(code, external);
+  }
   // What the app's files name stays: a class it writes itself, or passes
   // to a component.
   const named = new Set<string>(spec.styles.keep ?? []);
@@ -384,9 +391,18 @@ export function libraryStylePruner(input: {
 const SOURCE = /\.(?:svelte|[cm]?[jt]s)$/;
 
 /** The library's `.svelte` and script files, as text. */
-function librarySources(spec: LibrarySpec, projectRoot: string): string[] {
+function librarySources(
+  spec: LibrarySpec,
+  projectRoot: string,
+  loadable: (key: string) => boolean = () => true,
+): string[] {
   const src = path.join(requirePackageDir(spec.name, projectRoot), spec.srcDir);
   return readdirSync(src, { recursive: true, encoding: "utf8" })
-    .filter((file) => SOURCE.test(file) && !file.includes("node_modules"))
+    .filter(
+      (file) =>
+        SOURCE.test(file) &&
+        !file.includes("node_modules") &&
+        loadable(file.split(path.sep).join("/")),
+    )
     .map((file) => readFileSync(path.join(src, file), "utf8"));
 }

@@ -13,7 +13,7 @@ A realistic page per library, built with Vite with and without svelte-prune ([`e
 | Library                       | Style                      | JS smaller by | CSS smaller by |
 | :---------------------------- | :------------------------- | :------------ | :------------- |
 | flowbite-svelte               | Tailwind variants          | 37.8%         | 60.9%          |
-| carbon-components-svelte      | branches on props          | 34.1%         | 70.8%          |
+| carbon-components-svelte      | branches on props          | 34.1%         | 75.5%          |
 | svelte-5-ui-lib               | Tailwind variants          | 22.9%         | 71.7%          |
 | @sveltestrap/sveltestrap      | branches on props          | 22.0%         | 46.8%          |
 | svelte-ux                     | Tailwind                   | 7.4%          | 35.5%          |

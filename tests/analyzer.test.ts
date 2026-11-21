@@ -349,18 +349,22 @@ import Tile from "carbon-components-svelte/src/Tile/Tile.svelte";
 describe("analyzeUsage", () => {
   test("reads Carbon's scripts again when one changes", async () => {
     const mock = createMockCarbonPackage({
-      "index.js": "",
+      "index.js": `export { default as Tag } from "./Tag/Tag.svelte";`,
+      "Tag/Tag.svelte": `<script>import { a } from "../utils/classes.js";</script><i />`,
       "utils/classes.js": `export const a = "bx--alpha";`,
     });
     const util = join(mock.root, "src/utils/classes.js");
-    const isPruned = async (cls: string) =>
-      (
-        await analyzeUsage({
-          library: libraryAt(CARBON, mock.root),
-          bundled: [],
-          modules: [],
-        })
+    const library = libraryAt(CARBON, mock.root);
+    const isPruned = async (cls: string) => {
+      const usage = collectSvelteUsage(
+        app(`import { Tag } from "carbon-components-svelte";`, "<Tag />"),
+        "/app/App.svelte",
+        library,
+      );
+      return (
+        await analyzeUsage({ library, bundled: [], modules: [usage] })
       ).isPruned(cls);
+    };
     try {
       expect(await isPruned(".bx--alpha")).toBe(false);
       expect(await isPruned(".bx--beta")).toBe(true);
@@ -371,6 +375,76 @@ describe("analyzeUsage", () => {
     } finally {
       mock.dispose();
     }
+  });
+
+  describe("classes a library script names", () => {
+    const FILES = {
+      "index.js": [
+        `export { default as Tag } from "./Tag/Tag.svelte";`,
+        `export { default as Menu } from "./Menu/Menu.svelte";`,
+        `export { cursor } from "./utils/cursor.js";`,
+      ].join("\n"),
+      "Tag/Tag.svelte": `<script>import { tagClass } from "../utils/tag.js";</script><i class={tagClass()} />`,
+      "Menu/Menu.svelte": `<script>import { cursor } from "../utils/cursor.js";</script><ul use:cursor />`,
+      "utils/tag.js": `import { base } from "./base.js";\nexport const tagClass = () => base + " bx--tag--dynamic";`,
+      "utils/base.js": `export const base = "bx--tag-base";`,
+      "utils/cursor.js": `export function cursor(node) { node.classList.add("bx--menu__cursor"); }`,
+      "utils/theme.js": `document.documentElement.classList.add("bx--theme-zone");`,
+      // Built-ins run nothing of the module's own as it loads.
+      "utils/days.js": `const DAYS = new Set(["bx--day"]);\nexport const isDay = (c) => DAYS.has(c);`,
+      // But a shadowed one may.
+      "utils/shadow.js": `import { Set } from "./base.js";\nconst S = new Set(["bx--shadowed"]);`,
+      "utils/lazy.js": `export const load = (name) => import(name);\nexport const lazy = "bx--lazy-loaded";`,
+    };
+    const verdicts = async (markup: string, imports: string) => {
+      const mock = createMockCarbonPackage(FILES);
+      try {
+        const library = libraryAt(CARBON, mock.root);
+        const usage = collectSvelteUsage(
+          app(`import { ${imports} } from "carbon-components-svelte";`, markup),
+          "/app/App.svelte",
+          library,
+        );
+        const { isPruned } = await analyzeUsage({
+          library,
+          bundled: [],
+          modules: [usage],
+        });
+        return Object.fromEntries(
+          [
+            ".bx--tag--dynamic",
+            ".bx--tag-base",
+            ".bx--menu__cursor",
+            ".bx--theme-zone",
+            ".bx--lazy-loaded",
+            ".bx--day",
+            ".bx--shadowed",
+          ].map((cls) => [cls, isPruned(cls)]),
+        );
+      } finally {
+        mock.dispose();
+      }
+    };
+
+    test("count only when something that renders imports the script", async () => {
+      expect(await verdicts("<Tag />", "Tag, Menu")).toEqual({
+        // Through `tag.js`, and `base.js` it imports.
+        ".bx--tag--dynamic": false,
+        ".bx--tag-base": false,
+        // No Menu renders, so `cursor.js` never runs.
+        ".bx--menu__cursor": true,
+        // It runs when it loads.
+        ".bx--theme-zone": false,
+        ".bx--lazy-loaded": true,
+        ".bx--day": true,
+        ".bx--shadowed": false,
+      });
+    });
+
+    test("all count when the app imports one of the library's values", async () => {
+      const kept = await verdicts("<Tag />", "Tag, cursor");
+      expect(Object.values(kept).every((pruned) => !pruned)).toBe(true);
+    });
   });
 
   test("one tertiary button prunes other kinds, sizes, skeleton and tooltip", async () => {

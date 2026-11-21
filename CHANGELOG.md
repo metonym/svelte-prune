@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+**Features**
+
+- Stylesheet pruning counts only the library modules that can load: live
+  components and the modules they import, plus scripts that run code as
+  they load. Classes a script names stay only when one of those imports
+  it, and so do the custom properties and keyframes a source reads or
+  builds (`` `--cds-${name}` `` in a Theme nothing renders no longer keeps
+  every token). An app that imports one of the library's values, or a
+  module with an import that can't be followed, keeps every module's.
+  Built-ins (`new Set(…)`, `Symbol()`, `Object.freeze(…)`) don't count
+  as running code. Carbon's example: gzipped CSS 75.5% smaller (70.8%).
+
 ## 0.11.0
 
 **Features**
