@@ -27,10 +27,10 @@
       "gzip": 93956
     },
     "pruned": {
-      "bytes": 222644,
-      "gzip": 27464
+      "bytes": 194006,
+      "gzip": 23057
     },
-    "gzipSmallerBy": "70.8%",
+    "gzipSmallerBy": "75.5%",
     "renderedSelectorsLost": 0
   },
   "html": {

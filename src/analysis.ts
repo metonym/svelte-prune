@@ -468,6 +468,7 @@ export async function specializeFiles(input: {
       spec: input.library,
       projectRoot: input.projectRoot,
       isPruned: result.isPruned,
+      loadable: result.analysis.loadable,
       files: input.files,
       safelist: input.safelist,
     });

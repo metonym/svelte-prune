@@ -1,5 +1,13 @@
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  lexComponent,
+  lexDynamicImports,
+  lexImportsExports,
+} from "svelte-ast/lexer";
+import { extractIdentifiers } from "svelte-ast/walk";
+import { forEachNode, type Node, parseModule } from "./ast";
 import type { ModuleUsage } from "./call-sites";
 import {
   type ComponentModel,
@@ -53,13 +61,19 @@ export type UsageAnalysis = {
   usages: Map<string, ComponentUsage>;
   /** `.x--btn--danger` when no button is danger, and every class of a component that can't render. */
   isPruned(cls: string): boolean;
+  /** Whether library module `key` (`utils/x.js`) can load: something that renders imports it. */
+  loadable(key: string): boolean;
   /** The scope `key` was last walked in; `undefined` if it can't render. */
   scopeFor(key: string): Scope | undefined;
 };
 
 type LibrarySources = {
-  /** Classes and prefixes the library's script modules name; never pruned. */
+  /** Classes and prefixes the library's script modules name. */
   scriptTokens: Set<string>;
+  /** The same, per script module. */
+  scriptTokensOf: Map<string, Set<string>>;
+  /** Which modules import which, read on first use: only pruning styles needs it. */
+  graph: () => ModuleGraph;
   componentContexts: Set<string>;
   scriptContexts: Set<string>;
   unknownScriptContext: boolean;
@@ -69,6 +83,27 @@ type LibrarySources = {
   scriptContextReads: Set<string>;
 };
 
+/**
+ * Built-ins a script may call as it loads without running anything of its
+ * own: their arguments are checked like the rest.
+ */
+const BUILTIN_CALLS = new Set([
+  "Set",
+  "Map",
+  "WeakMap",
+  "WeakSet",
+  "RegExp",
+  "Symbol",
+  "Symbol.for",
+  "Object.freeze",
+  "Object.fromEntries",
+  "Object.entries",
+  "Object.keys",
+  "Object.values",
+]);
+
+/** Imports that load no script: components, stylesheets, JSON. */
+const RE_NOT_SCRIPT = /\.(?:svelte|css|json)$/;
 const SET_CONTEXT = /setContext\(\s*["']([^"']+)["']/g;
 const GET_CONTEXT = /\bget(?:All)?Contexts?\(/;
 /** A `setContext` call whose key isn't a lone string literal. */
@@ -94,6 +129,10 @@ export async function scanLibrarySources(
   const { src } = library;
   const sources: LibrarySources = {
     scriptTokens: new Set(),
+    scriptTokensOf: new Map(),
+    graph: () => {
+      throw new Error("unset");
+    },
     componentContexts: new Set(),
     scriptContexts: new Set(),
     unknownScriptContext: false,
@@ -104,11 +143,19 @@ export async function scanLibrarySources(
   const codes = await Promise.all(
     files.map((file) => readFile(path.join(src, file), "utf8")),
   );
+  let graph: ModuleGraph | undefined;
+  sources.graph = () => {
+    graph ??= readModuleGraph(library, files, sources.scriptTokensOf);
+    return graph;
+  };
   for (const [i, file] of files.entries()) {
     const code = codes[i];
     const isScript = file.endsWith(".js");
     if (isScript) {
-      classTokensOf(library.spec)?.script(code, sources.scriptTokens);
+      const own = new Set<string>();
+      classTokensOf(library.spec)?.script(code, own);
+      for (const token of own) sources.scriptTokens.add(token);
+      if (own.size > 0) sources.scriptTokensOf.set(file, own);
       if (GET_CONTEXT.test(code)) {
         const model = loadScriptModel(src, file);
         if (!model || model.readsUnknownContext) {
@@ -140,6 +187,202 @@ export async function scanLibrarySources(
     }
   }
   return sources;
+}
+
+type ModuleGraph = {
+  /** Each module's static imports and re-exports of the library's own modules. */
+  imports: Map<string, Set<string>>;
+  /**
+   * Modules whose imports can't all be followed (`import(x)`, the barrel,
+   * a path outside `src`): reaching one keeps every script's classes.
+   */
+  opaque: Set<string>;
+  /** Scripts with classes that run code as they load: theirs always count. */
+  runOnLoad: Set<string>;
+};
+
+const DYNAMIC_IMPORT = /\b(?:import|require)\s*\(|import\.meta\.glob/;
+
+function readModuleGraph(
+  library: Library,
+  files: readonly string[],
+  scriptTokensOf: ReadonlyMap<string, Set<string>>,
+): ModuleGraph {
+  const graph: ModuleGraph = {
+    imports: new Map(),
+    opaque: new Set(),
+    runOnLoad: new Set(),
+  };
+  const known = new Set(files);
+  for (const file of files) {
+    const code = readFileSync(path.join(library.src, file), "utf8");
+    readModuleImports(library, file, code, known, graph);
+    if (scriptTokensOf.has(file) && runsOnLoad(code)) graph.runOnLoad.add(file);
+  }
+  return graph;
+}
+
+/**
+ * Records the library modules `file` imports or re-exports. One with an
+ * import it can't follow is opaque.
+ */
+function readModuleImports(
+  library: Library,
+  file: string,
+  code: string,
+  known: ReadonlySet<string>,
+  graph: ModuleGraph,
+): void {
+  const imports = new Set<string>();
+  graph.imports.set(file, imports);
+  let scripts: string[] = [code];
+  if (file.endsWith(".svelte")) {
+    const { instance, module } = lexComponent(code);
+    scripts = [instance, module].flatMap((script) =>
+      script ? [code.slice(script.content.start, script.content.end)] : [],
+    );
+  }
+  const follow = (source: string) => {
+    if (source === library.name || library.isSpecifier(source)) {
+      // The barrel, or a path in the package: anything it reaches.
+      graph.opaque.add(file);
+      return;
+    }
+    if (!source.startsWith(".")) return;
+    const joined = path.posix.join(path.posix.dirname(file), source);
+    const target = [
+      joined,
+      `${joined}.js`,
+      path.posix.join(joined, "index.js"),
+    ].find((candidate) => known.has(candidate));
+    if (target) imports.add(target);
+    else if (!RE_NOT_SCRIPT.test(joined)) graph.opaque.add(file);
+  };
+  try {
+    for (const script of scripts) {
+      for (const statement of lexImportsExports(script)) {
+        if (statement.source) follow(statement.source.value);
+      }
+    }
+    // Markup can import too: `{#await import("…")}`.
+    if (!DYNAMIC_IMPORT.test(code)) return;
+    for (const call of lexDynamicImports(code)) {
+      if (call.source) follow(call.source.value);
+      else graph.opaque.add(file);
+    }
+  } catch {
+    graph.opaque.add(file);
+  }
+}
+
+/**
+ * Whether a script runs code when it loads, outside any function: a
+ * statement, or a declaration whose value calls something. Those may apply
+ * classes without anything calling them.
+ */
+function runsOnLoad(code: string): boolean {
+  let body: Node[];
+  try {
+    body = parseModule(code, { comments: false }).body as Node[];
+  } catch {
+    return true;
+  }
+  // Names the module declares itself: not the built-ins.
+  const own = new Set<string>();
+  for (const statement of body) {
+    const declaration =
+      statement.type === "ExportNamedDeclaration"
+        ? statement.declaration
+        : statement;
+    if (declaration?.type === "ImportDeclaration") {
+      for (const { local } of declaration.specifiers) own.add(local.name);
+    } else if (declaration?.type === "VariableDeclaration") {
+      for (const { id } of declaration.declarations) {
+        for (const { name } of extractIdentifiers(id)) own.add(name);
+      }
+    } else if (
+      (declaration?.type === "FunctionDeclaration" ||
+        declaration?.type === "ClassDeclaration") &&
+      declaration.id
+    ) {
+      own.add(declaration.id.name);
+    }
+  }
+  const builtin = (callee: Node): boolean => {
+    if (callee.type === "Identifier") {
+      return BUILTIN_CALLS.has(callee.name) && !own.has(callee.name);
+    }
+    return (
+      callee.type === "MemberExpression" &&
+      !callee.computed &&
+      callee.object.type === "Identifier" &&
+      callee.property.type === "Identifier" &&
+      !own.has(callee.object.name) &&
+      BUILTIN_CALLS.has(`${callee.object.name}.${callee.property.name}`)
+    );
+  };
+  const calls = (node: Node | null | undefined) => {
+    let found = false;
+    forEachNode(node, (inner) => {
+      if (
+        ((inner.type === "CallExpression" || inner.type === "NewExpression") &&
+          !builtin(inner.callee)) ||
+        inner.type === "TaggedTemplateExpression"
+      ) {
+        found = true;
+      }
+    });
+    return found;
+  };
+  return body.some((statement) => {
+    const declaration =
+      statement.type === "ExportNamedDeclaration" ||
+      statement.type === "ExportDefaultDeclaration"
+        ? statement.declaration
+        : statement;
+    switch (declaration?.type) {
+      case undefined:
+      case "ImportDeclaration":
+      case "ExportAllDeclaration":
+      case "FunctionDeclaration":
+      case "ClassDeclaration":
+        return false;
+      case "VariableDeclaration":
+        return declaration.declarations.some(({ init }) =>
+          init &&
+          init.type !== "ArrowFunctionExpression" &&
+          init.type !== "FunctionExpression"
+            ? calls(init)
+            : false,
+        );
+      default:
+        return true;
+    }
+  });
+}
+
+/**
+ * The library modules that can load: live components (`live`, module
+ * keys), scripts that run as they load, and every module they import.
+ * `undefined` (any may) when the app imports one of the library's values,
+ * or something they reach has an import that can't be followed.
+ */
+function loadableModules(
+  sources: LibrarySources,
+  live: Iterable<string>,
+  appReadsValues: boolean,
+): ReadonlySet<string> | undefined {
+  if (appReadsValues) return undefined;
+  const graph = sources.graph();
+  const seen = new Set<string>();
+  const queue = [...live, ...graph.runOnLoad];
+  for (const key of queue) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (graph.opaque.has(key)) return undefined;
+    for (const next of graph.imports.get(key) ?? []) queue.push(next);
+  }
+  return seen;
 }
 
 /** Per key: `undefined` (no provider above) or a provider's object, with stores no reader can set. */
@@ -436,8 +679,13 @@ export async function analyzeUsage(input: {
   let appProvidesUnknown = false;
   let appReadsContext = false;
   let openAll = false;
+  let appReadsValues = false;
   for (const module of input.modules) {
     openAll ||= module.openAll;
+    appReadsValues ||=
+      module.openAll ||
+      module.libraryValues === "any" ||
+      (module.libraryValues?.size ?? 0) > 0;
     for (const key of module.providedContexts) appContexts.add(key);
     appProvidesUnknown ||= module.providesUnknownContext === true;
     appReadsContext ||= module.readsLibraryContext === true;
@@ -484,9 +732,39 @@ export async function analyzeUsage(input: {
     library,
   );
 
-  const scriptPrefixes = [...sources.scriptTokens].filter((token) =>
-    token.endsWith("-"),
-  );
+  // Only scripts something that renders can load may apply their classes.
+  // Worked out on first use: only pruning styles asks.
+  let loadable: ReadonlySet<string> | undefined | null = null;
+  const loadableNow = () => {
+    if (loadable === null) {
+      loadable = loadableModules(
+        sources,
+        precise.usages.keys(),
+        appReadsValues,
+      );
+    }
+    return loadable;
+  };
+  let scripts: { tokens: ReadonlySet<string>; prefixes: string[] } | undefined;
+  const scriptClasses = () => {
+    if (scripts) return scripts;
+    const reached = loadableNow();
+    let tokens: ReadonlySet<string> = sources.scriptTokens;
+    if (reached) {
+      const own = new Set<string>();
+      for (const key of reached) {
+        for (const token of sources.scriptTokensOf.get(key) ?? []) {
+          own.add(token);
+        }
+      }
+      tokens = own;
+    }
+    scripts = {
+      tokens,
+      prefixes: [...tokens].filter((token) => token.endsWith("-")),
+    };
+    return scripts;
+  };
   const verdicts = new Map<string, boolean>();
   // Only what prunes styles asks; a rewrite never walks each site.
   let rendered: ReturnType<typeof passClasses> | undefined;
@@ -500,8 +778,8 @@ export async function analyzeUsage(input: {
       verdict =
         !rendered.classes.has(cls) &&
         !startsWithAny(cls, rendered.prefixes) &&
-        !sources.scriptTokens.has(cls) &&
-        !startsWithAny(cls, scriptPrefixes);
+        !scriptClasses().tokens.has(cls) &&
+        !startsWithAny(cls, scriptClasses().prefixes);
       verdicts.set(cls, verdict);
     }
     return verdict;
@@ -511,6 +789,7 @@ export async function analyzeUsage(input: {
     liveComponents: new Set(precise.usages.keys()),
     usages: precise.usages,
     isPruned,
+    loadable: (key) => loadableNow()?.has(key) ?? true,
     scopeFor(key) {
       const usage = precise.usages.get(key);
       return usage
