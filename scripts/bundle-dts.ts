@@ -154,6 +154,8 @@ function rollupDts(entryDts: string, emitted: Map<string, string>): string {
   const declsByFileAndName = new Map<string, Map<string, Decl>>();
   /** Global name → decl for private helper type-ref chase (first wins; helpers are unique). */
   const declsByName = new Map<string, Decl>();
+  /** Every declaration of each name: a name two files declare can't be rolled up. */
+  const declsNamed = new Map<string, Decl[]>();
   const allDecls: Decl[] = [];
 
   for (const file of reachable) {
@@ -190,6 +192,9 @@ function rollupDts(entryDts: string, emitted: Map<string, string>): string {
       for (const n of names) {
         byName.set(n, decl);
         if (!declsByName.has(n)) declsByName.set(n, decl);
+        const same = declsNamed.get(n) ?? [];
+        same.push(decl);
+        declsNamed.set(n, same);
       }
     }
   }
@@ -223,6 +228,16 @@ function rollupDts(entryDts: string, emitted: Map<string, string>): string {
     seenName.add(name);
     const decl = declsByName.get(name);
     if (!decl || kept.has(decl)) continue;
+    // The rolled file has one scope: references to either would land on the
+    // first, as `libraryImports`' `ModuleGraph` once did.
+    const files = new Set(
+      (declsNamed.get(name) ?? []).map((other) => other.sourceFile.fileName),
+    );
+    if (files.size > 1) {
+      throw new Error(
+        `${relative(process.cwd(), entryDts)} needs the type \`${name}\`, which ${[...files].map((file) => relative(process.cwd(), file)).join(" and ")} both declare: rename one.`,
+      );
+    }
     kept.add(decl);
     for (const ref of collectTypeRefs(decl.node)) queue.push(ref);
   }

@@ -73,7 +73,7 @@ type LibrarySources = {
   /** The same, per script module. */
   scriptTokensOf: Map<string, Set<string>>;
   /** Which modules import which, read on first use: only pruning styles needs it. */
-  graph: () => ModuleGraph;
+  graph: () => LibraryModules;
   componentContexts: Set<string>;
   scriptContexts: Set<string>;
   unknownScriptContext: boolean;
@@ -143,7 +143,7 @@ export async function scanLibrarySources(
   const codes = await Promise.all(
     files.map((file) => readFile(path.join(src, file), "utf8")),
   );
-  let graph: ModuleGraph | undefined;
+  let graph: LibraryModules | undefined;
   sources.graph = () => {
     graph ??= readModuleGraph(library, files, sources.scriptTokensOf);
     return graph;
@@ -189,7 +189,7 @@ export async function scanLibrarySources(
   return sources;
 }
 
-type ModuleGraph = {
+type LibraryModules = {
   /** Each module's static imports and re-exports of the library's own modules. */
   imports: Map<string, Set<string>>;
   /**
@@ -207,8 +207,8 @@ function readModuleGraph(
   library: Library,
   files: readonly string[],
   scriptTokensOf: ReadonlyMap<string, Set<string>>,
-): ModuleGraph {
-  const graph: ModuleGraph = {
+): LibraryModules {
+  const graph: LibraryModules = {
     imports: new Map(),
     opaque: new Set(),
     runOnLoad: new Set(),
@@ -231,7 +231,7 @@ function readModuleImports(
   file: string,
   code: string,
   known: ReadonlySet<string>,
-  graph: ModuleGraph,
+  graph: LibraryModules,
 ): void {
   const imports = new Set<string>();
   graph.imports.set(file, imports);

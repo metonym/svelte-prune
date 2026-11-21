@@ -195,7 +195,7 @@ function exportsUnder(src: string): ExportResolver {
   return cached.resolver;
 }
 
-function libraryResolver(src: string): ImportResolver {
+function libraryResolver(src: string): ModuleImportResolver {
   return (from, source, name) => {
     const exported = exportsUnder(src).importOf(from, source, name);
     if (exported.kind === "component") return { component: exported.key };
@@ -302,7 +302,7 @@ function loadHelper(
 }
 
 /** `name` is `"*"` for a namespace import. */
-type ImportResolver = (
+type ModuleImportResolver = (
   from: string,
   source: string,
   name: string,
@@ -335,7 +335,7 @@ function stringExport(
 export function buildModuleModel(
   code: string,
   key: string,
-  resolveImport?: ImportResolver,
+  resolveImport?: ModuleImportResolver,
   typescript = false,
 ): ComponentModel {
   const content = parseModule(code, { typescript, comments: false });
@@ -363,7 +363,7 @@ export function buildModuleModel(
 export function buildComponentModel(
   code: string,
   key: string,
-  resolveImport: ImportResolver = () => undefined,
+  resolveImport: ModuleImportResolver = () => undefined,
   parsed?: AST.Root,
 ): ComponentModel {
   const ast = parsed ?? parse(code, { comments: false, css: false });
@@ -1033,7 +1033,7 @@ function readTopLevelStatement(
   model: ComponentModel,
   statement: Node,
   isInstance: boolean,
-  resolveImport: ImportResolver,
+  resolveImport: ModuleImportResolver,
   lets: Set<string> | undefined,
 ): void {
   if (statement.type === "ImportDeclaration") {
