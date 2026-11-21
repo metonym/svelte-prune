@@ -8,7 +8,11 @@ import { globSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { filterCss } from "caligula";
 import { type ParsedSelector, parseSelectorList } from "caligula/selector";
-import { classTokensOf, type LibrarySpec } from "./library-paths";
+import {
+  classTokensOf,
+  isPrefixToken,
+  type LibrarySpec,
+} from "./library-paths";
 import { requirePackageDir } from "./package";
 
 type PrunedStyles = {
@@ -353,12 +357,16 @@ export function libraryStylePruner(input: {
     readsIn(code, external);
   }
   // What the app's files name stays: a class it writes itself, or passes
-  // to a component.
+  // to a component, and every class starting with a prefix it builds names
+  // from (`` `x--tag--${color}` ``).
   const named = new Set<string>(spec.styles.keep ?? []);
+  const namedPrefixes: string[] = [];
   for (const { code } of input.files) {
     if (!code.includes(tokens.marker)) continue;
     for (const token of tokens.text(code)) {
-      named.add(token.startsWith(".") ? token.slice(1) : token);
+      const cls = token.startsWith(".") ? token.slice(1) : token;
+      if (isPrefixToken(cls)) namedPrefixes.push(cls);
+      else named.add(cls);
     }
   }
   // Only a class the library's tokens can name may go: a class they never
@@ -370,6 +378,7 @@ export function libraryStylePruner(input: {
     (cls) =>
       defined.has(cls) &&
       !named.has(cls) &&
+      !namedPrefixes.some((prefix) => cls.startsWith(prefix)) &&
       readable(cls) &&
       isPruned(`.${cls}`),
     safelist.length > 0
