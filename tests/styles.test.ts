@@ -296,6 +296,24 @@ describe("custom properties and keyframes", () => {
     expect(css).not.toContain("--lib-orphan-a");
   });
 
+  test("go though the app writes comments and classes from templates", async () => {
+    const withScript = (script: string) =>
+      prunedStyles(
+        { lib: VAR_LIBRARY, app: appRendering("<Button />", script) },
+        VAR_CSS,
+      );
+    // `<!--${id}-->` and `x--btn--${kind}` build no property name.
+    const css = await withScript(
+      "const id = 1; const kind = 'a';\nexport const marker = `<!--${id}-->`;\nexport const cls = `x--btn--${kind}`;",
+    );
+    expect(css).not.toContain("--lib-unused");
+    // `--${name}` may build any.
+    const any = await withScript(
+      "const name = 'a';\nexport const prop = `--${name}`;",
+    );
+    expect(any).toContain("--lib-unused");
+  });
+
   test("stay when a rule that renders reads them", async () => {
     const css = await prune("<Button busy />");
     expect(css).toContain("--lib-chain: var(--lib-chained)");
