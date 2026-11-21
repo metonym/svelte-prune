@@ -14,6 +14,7 @@ import {
   libraryPaths,
 } from "./library-paths";
 import { installedMajor, packageSignature, requirePackageDir } from "./package";
+import { hydrateRemoved, pruneRuntime } from "./runtime";
 import type { SharedAnalysis } from "./shared-analysis";
 import { importKey, RE_EXT_STYLESHEET, realpath, stripQuery } from "./util";
 
@@ -51,6 +52,16 @@ export type SveltePruneOptions = {
    * selector it's in, a RegExp every selector it matches (`/^\.x--tag--/`).
    */
   safelist?: Array<string | RegExp>;
+
+  /**
+   * `false` for an app that only mounts (`mount()`), never hydrating
+   * server-rendered HTML: Svelte 5's client runtime loses its hydration
+   * code. A build whose output can still reach `hydrate()` (SvelteKit with
+   * SSR, the app's own `hydrate`, `svelte/legacy`'s class components) fails.
+   * Vite, Rollup and Rolldown only: webpack and Rspack ignore it.
+   * @default true
+   */
+  hydration?: boolean;
 };
 
 const DEFAULT_CONTENT = [
@@ -189,6 +200,8 @@ function newBuild(root: string) {
     realpaths: new Map<string, string | undefined>(),
     pruneStyles: undefined as SpecializedComponents["pruneStyles"],
     shared: undefined as SharedAnalysis | undefined,
+    /** Whether `pruneRuntime` warned this build. */
+    runtimeWarned: false,
   };
 }
 
@@ -202,6 +215,7 @@ export function createComponentOptimizer(
   const { label } = spec;
   const library = libraryPaths(spec);
   const content = options?.content ?? DEFAULT_CONTENT;
+  const pruneHydration = options?.hydration === false;
   let build = newBuild(process.cwd());
   /** Watch rebuilds and SvelteKit's second build reuse it unless `content` changed. */
   let last:
@@ -232,6 +246,13 @@ export function createComponentOptimizer(
       resolve?: ImportResolver,
     ): Promise<{ warning?: string; info?: string; report?: string[] }> {
       build = newBuild(root);
+      const svelteMajor = pruneHydration
+        ? installedMajor("svelte", root)
+        : undefined;
+      const ignored =
+        svelteMajor !== undefined && svelteMajor < 5
+          ? `${name} ignored \`hydration: false\`: Svelte ${svelteMajor} bundles hydration code only for components compiled with \`hydratable\`.`
+          : undefined;
       const files: Array<{ file: string; code: string }> = [];
       const hash = createHash("sha1");
       for (const file of globContent(content, root)) {
@@ -304,16 +325,19 @@ export function createComponentOptimizer(
             "warning" in result ? undefined : result,
             names.failure,
           );
-          if (warning) return { warning };
+          if (warning) return { warning: joinWarnings(warning, ignored) };
           if (key !== undefined) written = { result, key };
         }
       }
-      if ("warning" in result) return { warning: result.warning };
+      if ("warning" in result) {
+        return { warning: joinWarnings(result.warning, ignored) };
+      }
       build.pruneStyles = result.pruneStyles;
       build.sources = result.sources;
       build.readImport = result.readImport;
       build.closed = new Set([...result.closed].map(real));
       return {
+        warning: ignored,
         info: options?.silent
           ? undefined
           : `rewrote ${result.sources.size - result.apps - result.tables.modules} ${label} components${result.apps > 0 ? ` and ${result.apps} of the app's own` : ""}${result.tables.modules > 0 ? ` and ${result.tables.pruned + result.tables.emptied} tailwind-variants tables` : ""} for this app (${result.edits} edits)`,
@@ -354,6 +378,33 @@ export function createComponentOptimizer(
       const properties =
         declarations > 0 ? ` and ${declarations} custom properties` : "";
       return `removed ${rules} unused ${label} CSS rules${properties} (${kB(before)} -> ${kB(after)})`;
+    },
+
+    /**
+     * Module `id` without Svelte's hydration code, with `hydration: false`:
+     * `code` to serve instead, `warning` (once a build) if it can't.
+     */
+    pruneRuntime(
+      id: string,
+      code: string,
+    ): { code?: string; warning?: string } | undefined {
+      if (!pruneHydration) return undefined;
+      const pruned = pruneRuntime(id, code, name);
+      if (!pruned || "code" in pruned) return pruned;
+      if (build.runtimeWarned) return undefined;
+      build.runtimeWarned = true;
+      return pruned;
+    },
+
+    /** With `hydration: false`, an error when any of `chunks` (name to code) can still hydrate. */
+    checkHydration(chunks: Map<string, string>): string | undefined {
+      if (!pruneHydration) return undefined;
+      const marker = hydrateRemoved(name);
+      const hydrating = [...chunks]
+        .filter(([, code]) => code.includes(marker))
+        .map(([chunk]) => chunk);
+      if (hydrating.length === 0) return undefined;
+      return `${library.logPrefix} ${name} removed Svelte's hydration code (\`hydration: false\`), but ${hydrating.join(", ")} can still call hydrate(): SvelteKit with SSR, \`hydrate\` from \`svelte\`, or a class component from \`svelte/legacy\`. Mount the app with mount(), or remove \`hydration: false\`.`;
     },
 
     /** Whether `id` may be served rewritten, now or after `content` changes. */
@@ -509,6 +560,10 @@ export function createComponentOptimizer(
         : undefined;
     },
   };
+}
+
+function joinWarnings(...warnings: Array<string | undefined>) {
+  return warnings.filter(Boolean).join(" ") || undefined;
 }
 
 export type ComponentOptimizer = ReturnType<typeof createComponentOptimizer>;

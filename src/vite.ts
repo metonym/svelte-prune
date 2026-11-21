@@ -76,7 +76,14 @@ export function sveltePrune(
       return serving ? undefined : optimizer.load(id);
     },
     transform(code, id) {
-      if (!serving) optimizer.check(id, code);
+      if (serving) return;
+      optimizer.check(id, code);
+      const runtime = optimizer.pruneRuntime(id, code);
+      if (runtime?.warning) this.warn(runtime.warning);
+      // Within lines: the bundler's source map still holds.
+      return runtime?.code === undefined
+        ? undefined
+        : { code: runtime.code, map: null };
     },
     async buildEnd() {
       if (serving) return;
@@ -111,8 +118,10 @@ export function sveltePrune(
       order: "post",
       handler(_, bundle) {
         if (serving) return;
+        const chunks = new Map<string, string>();
         const assets = new Map<string, string>();
         for (const file of Object.values(bundle)) {
+          if (file.type === "chunk") chunks.set(file.fileName, file.code);
           if (file.type !== "asset" || !file.fileName.endsWith(".css"))
             continue;
           assets.set(
@@ -122,6 +131,8 @@ export function sveltePrune(
               : new TextDecoder().decode(file.source),
           );
         }
+        const hydrating = optimizer.checkHydration(chunks);
+        if (hydrating) this.error(hydrating);
         if (assets.size === 0) return;
         const info = optimizer.pruneStyles(assets);
         for (const [fileName, css] of assets) {

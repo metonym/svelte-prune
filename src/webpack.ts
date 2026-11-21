@@ -180,7 +180,11 @@ export class SveltePrunePlugin {
     const { spec } = this;
     const name = this.names.plugin;
     const library = libraryPaths(spec);
-    const optimizer = createComponentOptimizer(spec, this.options, this.names);
+    const optimizer = createComponentOptimizer(
+      spec,
+      this.options && { ...this.options, hydration: undefined },
+      this.names,
+    );
     // For a sibling plugin's `siblingAnalysis(compiler, …)`: by compiler,
     // since another plugin may wrap this one.
     shareAnalysis(compiler, () => optimizer.shared);
@@ -211,6 +215,13 @@ export class SveltePrunePlugin {
     );
 
     let warning: string | undefined;
+    // webpack keeps Svelte's custom element class, and through it
+    // `svelte/legacy`'s `hydrate()`, whatever the app uses: no build could
+    // show the app never hydrates.
+    const ignored =
+      this.options?.hydration === false
+        ? `${name} ignored \`hydration: false\`, which needs Vite, Rollup or Rolldown: webpack and Rspack bundle Svelte's hydrate() whether or not the app calls it.`
+        : undefined;
     const prepare = async () => {
       const result = await optimizer.prepare(
         compiler.context,
@@ -224,7 +235,9 @@ export class SveltePrunePlugin {
     compiler.hooks.watchRun.tapPromise(name, prepare);
 
     compiler.hooks.thisCompilation.tap(name, (compilation) => {
-      if (warning) compilation.warnings.push(new WebpackError(warning));
+      for (const message of [ignored, warning]) {
+        if (message) compilation.warnings.push(new WebpackError(message));
+      }
       compilation.hooks.finishModules.tap(name, (modules) => {
         for (const module of modules) {
           const { resource } = module;

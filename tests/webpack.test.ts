@@ -1,8 +1,11 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { compile } from "svelte/compiler";
 import webpack from "webpack";
 import type { LibrarySpec } from "../src/library-paths";
+import type { SveltePruneOptions } from "../src/optimizer";
 import { optimizerRegistry } from "../src/loader";
+import { hydrateRemoved } from "../src/runtime";
 import { type SharedAnalysis, siblingAnalysis } from "../src/shared-analysis";
 import { SveltePrunePlugin } from "../src/webpack";
 import { CARBON } from "./helpers/carbon";
@@ -22,6 +25,8 @@ const UNREAD_MODAL =
   /can't read how src[\\/]App\.svelte imports `@carbon\/src\/Modal\/Modal\.svelte`/;
 const MISSED_TOOLBAR =
   /svelte-prune rewrote Carbon components before seeing lib[\\/]toolbar\.js/;
+const HYDRATION_IGNORED =
+  /ignored `hydration: false`, which needs Vite, Rollup or Rolldown/;
 const TABLE_IMPORTED =
   /rewrote the tailwind-variants tables in node_modules[\\/]tvlib[\\/]src[\\/]theme\.js .* but src[\\/]index\.js imports it directly/;
 
@@ -351,5 +356,70 @@ describe("SveltePrunePlugin", () => {
     } finally {
       aliased.dispose();
     }
+  });
+});
+
+describe("SveltePrunePlugin with `hydration: false`", () => {
+  const MAIN = `import { mount } from "svelte";\nimport App from "./App.js";\nmount(App, { target: document.body });`;
+  // Blocks are what set `hydrating` as they render.
+  const APP = compile(
+    `<script>let items = $state([1, 2]);</script>\n{#each items as item}{#if item > 1}<b>{item}</b>{:else}<i>{item}</i>{/if}{/each}`,
+    { generate: "client" },
+  ).js.code;
+
+  /** A real webpack build of an app that mounts, and Svelte's client runtime. */
+  async function buildMounted(options: SveltePruneOptions) {
+    const project = createFakeProject();
+    project.linkCarbon();
+    symlinkSync(
+      resolvePackageRoot("svelte"),
+      path.join(project.root, "node_modules", "svelte"),
+      "dir",
+    );
+    mkdirSync(path.join(project.root, "src"));
+    writeFileSync(path.join(project.root, "src", "index.js"), MAIN);
+    writeFileSync(path.join(project.root, "src", "App.js"), APP);
+    try {
+      const compiler = webpack({
+        mode: "production",
+        context: project.root,
+        entry: "./src/index.js",
+        output: { path: path.join(project.root, "out") },
+        optimization: { minimize: false },
+        performance: { hints: false },
+        devtool: false,
+        plugins: [new SveltePrunePlugin(CARBON, { silent: true, ...options })],
+        infrastructureLogging: { level: "none" },
+      });
+      const stats = await new Promise<webpack.Stats>((resolve, reject) =>
+        compiler.run((error, result) =>
+          error || !result ? reject(error) : resolve(result),
+        ),
+      );
+      await new Promise((resolve) => compiler.close(resolve));
+      return {
+        errors: stats.compilation.errors.map(({ message }) => message),
+        warnings: stats.compilation.warnings.map(({ message }) => message),
+        // Without the project's name, in module comments.
+        code: readFileSync(
+          path.join(project.root, "out", "main.js"),
+          "utf8",
+        ).replaceAll(path.basename(project.root), ""),
+      };
+    } finally {
+      project.dispose();
+    }
+  }
+
+  test("is ignored, with a warning: webpack bundles hydrate() anyway", async () => {
+    const kept = await buildMounted({});
+    const ignored = await buildMounted({ hydration: false });
+    expect(ignored.errors).toEqual([]);
+    expect(ignored.warnings).toEqual([
+      expect.stringMatching(HYDRATION_IGNORED),
+    ]);
+    expect(ignored.code).toBe(kept.code);
+    expect(ignored.code).toContain("let hydrating = false;");
+    expect(ignored.code).not.toContain(hydrateRemoved("svelte-prune"));
   });
 });
