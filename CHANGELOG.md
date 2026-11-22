@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+**Features**
+
+- `svelte-prune/internal` exports `createComponentOptimizer`, the core
+  the Vite and webpack plugins share, so carbon-preprocess-svelte can
+  drive it from a bundler without either plugin's hooks (Bun).
+
 ## 0.13.1
 
 **Fixes**
