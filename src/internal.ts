@@ -21,7 +21,13 @@ export {
 export { default as loader, optimizerRegistry } from "./loader";
 export { MappingsBuilder } from "./mapped-text";
 export { libraryImports } from "./module-graph";
-export type { PluginNames, SveltePruneOptions } from "./optimizer";
+export {
+  type ComponentOptimizer,
+  createComponentOptimizer,
+  type ImportResolver,
+  type PluginNames,
+  type SveltePruneOptions,
+} from "./optimizer";
 export {
   isLinkedCheckout,
   listJsAndSvelteFiles,
