@@ -666,7 +666,7 @@ function optionalContextCall(
 ): string | undefined {
   if (
     call.type !== "CallExpression" ||
-    !call.arguments.includes(argument as Expression) ||
+    !call.arguments.some((a) => a === argument) ||
     call.callee.type !== "MemberExpression" ||
     !call.callee.optional ||
     call.callee.object.type !== "CallExpression"
@@ -801,7 +801,7 @@ function mirroredStore(
       return null;
     }
   }
-  const [initial] = declarator.init.arguments as Expression[];
+  const [initial] = declarator.init.arguments;
   return { initial: initial ?? null, writes };
 }
 
@@ -979,14 +979,14 @@ function declareDestructured(
   // The read takes the pattern's place in the source, for reports.
   const at = { start: pattern.start, end: pattern.end };
   const member = (property: Expression, computed: boolean) => {
-    const node = {
+    const node: Expression = {
       type: "MemberExpression",
       object: read,
       property,
       computed,
       optional: false,
       ...at,
-    } as unknown as Expression;
+    };
     DESTRUCTURING_READS.add(node);
     return node;
   };
@@ -1019,7 +1019,7 @@ function declareDestructured(
         declareDestructured(
           model,
           property.value,
-          member({ type: "Identifier", name: key } as Expression, false),
+          member({ type: "Identifier", name: key, ...at }, false),
           lets,
         );
       }
@@ -1034,7 +1034,7 @@ function declareDestructured(
         declareDestructured(
           model,
           element,
-          member({ type: "Literal", value: index } as Expression, true),
+          member({ type: "Literal", value: index, ...at }, true),
           lets,
         );
       }
@@ -1049,12 +1049,13 @@ function declareDestructured(
             type: "BinaryExpression",
             operator: "===",
             left: read,
-            right: { type: "Identifier", name: "undefined" },
+            right: { type: "Identifier", name: "undefined", ...at },
+            ...at,
           },
           consequent: pattern.right,
           alternate: read,
           ...at,
-        } as unknown as Expression,
+        },
         lets,
       );
       return;
