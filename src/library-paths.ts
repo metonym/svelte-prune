@@ -10,7 +10,7 @@ export type ClassTokens = {
   text(text: string): string[];
 };
 
-export type LibraryClassTokens = ClassTokens & {
+type LibraryClassTokens = ClassTokens & {
   script(code: string, into: Set<string>): void;
 };
 

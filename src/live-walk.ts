@@ -45,7 +45,7 @@ export type LiveResult = {
 };
 
 /** Calls a walk reports as it reaches them, live. */
-export type WatchedCalls = {
+type WatchedCalls = {
   watched: ReadonlyMap<Node, unknown>;
   call(node: Node): void;
 };

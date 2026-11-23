@@ -13,7 +13,7 @@ type MemberNode = Extract<Node, { type: "MemberExpression" }>;
  * `<svelte:component this={icons[kind]}>`: which entries render depends on
  * the keys `kind` can take.
  */
-export type ComponentMap = {
+type ComponentMap = {
   /** Module key of each entry's component, by key. */
   entries: Map<string, string>;
   /** Each entry's property, by key. */
