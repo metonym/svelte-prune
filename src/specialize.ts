@@ -1253,7 +1253,9 @@ function removableProp(
   ) {
     return undefined;
   }
-  const [{ id, init }] = statement.declaration.declarations;
+  const [declarator] = statement.declaration.declarations;
+  if (!declarator) return undefined;
+  const { id, init } = declarator;
   if (id.type !== "Identifier" || !removable(id.name)) return undefined;
   if (init && !isPure(init)) return undefined;
   return { name: id.name, statement, own: [id] };
@@ -1319,12 +1321,13 @@ function removableDeclarations(
       statement.type === "VariableDeclaration" &&
       statement.declarations.length === 1
     ) {
-      const [{ id, init }] = statement.declarations;
+      const [declarator] = statement.declarations;
       if (
-        id.type === "Identifier" &&
-        removable(id.name) &&
-        (!init || isPure(init))
+        declarator?.id.type === "Identifier" &&
+        removable(declarator.id.name) &&
+        (!declarator.init || isPure(declarator.init))
       ) {
+        const { id } = declarator;
         candidates.push({ name: id.name, statement, own: [id] });
       }
     } else if (

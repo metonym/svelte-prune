@@ -298,7 +298,7 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
   };
 
   for (const [i, file] of files.entries()) {
-    if (!file.endsWith(".js") || !codes[i].includes(MARKER)) continue;
+    if (!file.endsWith(".js") || !codes[i]?.includes(MARKER)) continue;
     const model = loadScriptModel(src, file);
     if (!model) continue;
     const tvs = new Set<string>();
@@ -362,15 +362,17 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
     barrel: new Map(),
     open: scriptReads(library, files, codes),
   };
-  const lexed = files.map((file, i) => lex(file, codes[i]));
+  const lexed = files.map((file, i) => ({
+    file,
+    ...lex(file, codes[i] ?? ""),
+  }));
 
   // Follow the tables through re-exports and imports until nothing new holds
   // one.
   const handled = new Set<string>();
   for (let changed = true; changed;) {
     changed = false;
-    for (const [i, file] of files.entries()) {
-      const { imports, exports } = lexed[i];
+    for (const { file, imports, exports } of lexed) {
       for (const { kind, local, exported, source } of exports) {
         const target = resolve(file, source);
         const from = target && aliases.get(target);
@@ -405,7 +407,7 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
             }
           } else if (file.endsWith(".svelte")) {
             if (module) open(id, `${file} imports it in \`<script module>\``);
-            const locals = scan.readers.get(file) ?? new Map();
+            const locals = scan.readers.get(file) ?? new Map<string, TableId>();
             locals.set(local, id);
             scan.readers.set(file, locals);
           } else {
@@ -425,8 +427,8 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
   // whole.
   for (const [i, file] of files.entries()) {
     const calls = file.endsWith(".svelte")
-      ? componentDynamicImports(codes[i])
-      : scriptDynamicImports(codes[i]);
+      ? componentDynamicImports(codes[i] ?? "")
+      : scriptDynamicImports(codes[i] ?? "");
     for (const { source } of calls) {
       if (source === null) {
         scan.open ??= `${file} imports a module it computes`;
@@ -456,7 +458,8 @@ function scriptReads(
   const exportResolver = createExportResolver(library.src);
   for (const [i, file] of files.entries()) {
     if (!file.endsWith(".js")) continue;
-    for (const { source, local, imported } of lex(file, codes[i]).imports) {
+    for (const { source, local, imported } of lex(file, codes[i] ?? "")
+      .imports) {
       if (library.isSpecifier(source) && source !== library.name) {
         return `${file} imports \`${source}\``;
       }
