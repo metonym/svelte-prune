@@ -183,7 +183,7 @@ export async function scanLibrarySources(
     }
     for (const match of code.matchAll(SET_CONTEXT)) {
       (isScript ? sources.scriptContexts : sources.componentContexts).add(
-        match[1],
+        match[1] ?? "",
       );
     }
     if (!SET_OTHER_CONTEXT.test(code)) continue;

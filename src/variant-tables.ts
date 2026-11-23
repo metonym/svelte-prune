@@ -72,7 +72,7 @@ type Scan = {
   /** Barrel export name -> table, for the app's imports. */
   barrel: Map<string, TableId>;
   /** Why every table keeps every class. */
-  open?: string;
+  open?: string | undefined;
 };
 
 const EMPTY_SCAN: Scan = {

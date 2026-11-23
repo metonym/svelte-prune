@@ -112,7 +112,7 @@ export type ComponentModel = {
    */
   readonly escapes: Map<string, Escape>;
   /** `rest` in `let { a, ...rest } = $props()`, unless reassigned. */
-  restPropsName?: string;
+  restPropsName?: string | undefined;
 };
 
 /**
@@ -1306,7 +1306,8 @@ function calledArrayMethod(
     return undefined;
   }
   const { name } = child.property;
-  return name === "includes" || inertCallback(parent.arguments[0])
+  const [callback] = parent.arguments;
+  return name === "includes" || (callback && inertCallback(callback))
     ? name
     : undefined;
 }

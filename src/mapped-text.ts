@@ -214,7 +214,7 @@ export class MappingsBuilder {
           const delta = column - prevColumn;
           buffer[out++] = COMMA;
           if (delta < 16) {
-            const digit = VLQ_DIGIT[delta];
+            const digit = VLQ_DIGIT[delta] ?? 0;
             buffer[out++] = digit;
             buffer[out++] = BASE64_A;
             buffer[out++] = BASE64_A;

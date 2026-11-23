@@ -45,7 +45,7 @@ export type ComponentUsage = {
   slotsUnknown: boolean;
   siteCount: number;
   appSites: CallSite[];
-  openReason?: string;
+  openReason?: string | undefined;
   /** Why each unknown prop is unknown, from the first site that made it so. */
   unknownBecause: Map<string, string>;
   /** Events some site listens to with `on:`. */

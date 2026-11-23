@@ -147,7 +147,7 @@ const BUILT_PROPERTY = /(?<![\w!-])(--[\w-]*)(?:\$\{|["'`]\s*\+)/g;
 function readsIn(code: string, into: ExternalReads): void {
   for (const [word] of code.matchAll(WORD)) into.words.add(word);
   for (const [, prefix] of code.matchAll(BUILT_PROPERTY)) {
-    into.propertyPrefixes.push(prefix);
+    if (prefix !== undefined) into.propertyPrefixes.push(prefix);
   }
 }
 
@@ -174,7 +174,8 @@ function pruneUnread(
     const read = new Set<string>();
     const words = new Set<string>();
     const scan = (text: string) => {
-      for (const [, property] of text.matchAll(VAR_READ)) read.add(property);
+      for (const [, property] of text.matchAll(VAR_READ))
+        if (property !== undefined) read.add(property);
       for (const [word] of text.matchAll(WORD)) words.add(word);
     };
     filterCss(css, {
@@ -355,7 +356,7 @@ export function libraryStylePruner(input: {
   loadable?: (key: string) => boolean;
   /** Files whose class names stay: the app's, as `content` reads them. */
   files: Iterable<{ code: string }>;
-  safelist?: readonly SafelistEntry[];
+  safelist?: readonly SafelistEntry[] | undefined;
 }): StylePruner | undefined {
   const { spec, projectRoot, isPruned } = input;
   const tokens = classTokensOf(spec);

@@ -317,7 +317,7 @@ function componentKey(
   library: LibraryPaths,
 ): string | undefined {
   const { model } = scope;
-  const [root, ...path] = name.split(".");
+  const [root = name, ...path] = name.split(".");
   const members = model.memberImports.get(root);
   if (members) {
     const rendered = memberOf(members, path);

@@ -95,7 +95,7 @@ type AppComponents = {
   /** File name -> files, for imports through an alias (`$lib/X.svelte`). */
   readonly byName: ReadonlyMap<string, readonly string[]>;
   /** Aliased imports the bundler resolved, by `importKey(from, source)`. */
-  readonly resolved?: ReadonlyMap<string, string>;
+  readonly resolved?: ReadonlyMap<string, string> | undefined;
 };
 
 export function indexAppComponents(
@@ -217,7 +217,9 @@ function contextUsage(
 > {
   const prefix = library.spec.contextKeyPrefix;
   const keys = code.includes(prefix)
-    ? [...code.matchAll(library.patterns.contextKey)].map((match) => match[2])
+    ? [...code.matchAll(library.patterns.contextKey)].flatMap(([, , key]) =>
+        key === undefined ? [] : [key],
+      )
     : [];
   const importsScript = () => library.patterns.scriptSpecifier.test(code);
   return {
@@ -330,8 +332,9 @@ function readImports(
       if (specifier.typeOnly) continue;
       if (isComponent) bindings.objects.add(specifier.local);
       if (appImport) {
-        if (appImport.exact && specifier.kind === "default") {
-          bindings.components.set(specifier.local, appImport.keys[0]);
+        const [key] = appImport.keys;
+        if (appImport.exact && specifier.kind === "default" && key) {
+          bindings.components.set(specifier.local, key);
           bindings.appComponents.add(specifier.local);
         } else {
           bindings.openAppComponents.push(...appImport.keys);
@@ -427,7 +430,8 @@ export function collectImportedUsage(
     // Every `.svelte` path it names, imported or not, renders with any props.
     usage.openApps = bindings.openApps;
     for (const match of code.matchAll(SVELTE_SPECIFIER)) {
-      for (const key of resolveAppImport(library, app, match[2])?.keys ?? []) {
+      for (const key of resolveAppImport(library, app, match[2] ?? "")?.keys ??
+        []) {
         usage.sites.push(
           openSite(key, file, reason, locate(code, match.index).line),
         );
@@ -446,7 +450,7 @@ export function collectImportedUsage(
     for (const specifier of (match[2] ?? "").split(",")) {
       const name = specifier.trim();
       if (name === "" || name.startsWith("type ")) continue;
-      const exported = library.exportOf(name.split(IMPORT_AS)[0]);
+      const exported = library.exportOf(name.split(IMPORT_AS)[0] ?? name);
       if (exported.kind === "component") {
         usage.sites.push(
           openSite(exported.key, file, reason, locate(code, match.index).line),
@@ -455,7 +459,7 @@ export function collectImportedUsage(
       } else if (exported.kind !== "value") {
         usage.openAll = true;
       } else {
-        values.add(name.split(IMPORT_AS)[0]);
+        values.add(name.split(IMPORT_AS)[0] ?? name);
       }
     }
   }
@@ -468,9 +472,9 @@ export function collectImportedUsage(
     library.patterns.directComponentSpecifier,
   )) {
     usage.sites.push(
-      openSite(match[1], file, reason, locate(code, match.index).line),
+      openSite(match[1] ?? "", file, reason, locate(code, match.index).line),
     );
-    bindings.libraryImports.components.add(match[1]);
+    bindings.libraryImports.components.add(match[1] ?? "");
   }
   return usage;
 }
@@ -593,11 +597,11 @@ function importedConstants(
 
 type SvelteUsageOptions = {
   /** The app's `.svelte` files: sites of these are collected too. */
-  apps?: AppComponents;
+  apps?: AppComponents | undefined;
   /** How this component is rendered; by default, with any props. */
-  usage?: ComponentUsage;
-  model?: ComponentModel;
-  constants?: ModuleConstants;
+  usage?: ComponentUsage | undefined;
+  model?: ComponentModel | undefined;
+  constants?: ModuleConstants | undefined;
 };
 
 export type ModuleConstants = (
@@ -742,7 +746,8 @@ export function collectSvelteUsage(
   /** Marks the components a branch that can't render names, without sites. */
   const markRendered = (node: Node): void => {
     forEachNode(node, (inner) => {
-      if (inner.type === "Component") rendered.add(inner.name.split(".")[0]);
+      if (inner.type === "Component")
+        rendered.add(inner.name.split(".")[0] ?? inner.name);
       if (
         inner.type === "Identifier" &&
         (bindings.components.has(inner.name) ||
@@ -789,7 +794,7 @@ export function collectSvelteUsage(
       }
 
       case "Component": {
-        const [root, ...members] = node.name.split(".");
+        const [root = node.name, ...members] = node.name.split(".");
         const exported = bindings.exports.get(root);
         let key: string | undefined;
         if (exported) {

@@ -381,15 +381,15 @@ export async function specializeFiles(input: {
   library: LibrarySpec;
   projectRoot: string;
   files: Array<{ file: string; code: string }>;
-  options?: SpecializeOptions;
+  options?: SpecializeOptions | undefined;
   /** Aliased `.svelte` imports the bundler resolved, by `importKey`. */
-  resolvedImports?: ReadonlyMap<string, string>;
+  resolvedImports?: ReadonlyMap<string, string> | undefined;
   failure: Failure;
   /**
    * Classes `pruneStyles` keeps whatever renders: ones the app builds from
    * data.
    */
-  safelist?: readonly SafelistEntry[];
+  safelist?: readonly SafelistEntry[] | undefined;
 }): Promise<SpecializedComponents | { warning: string }> {
   let appUsage: AppUsage;
   let library: Library;

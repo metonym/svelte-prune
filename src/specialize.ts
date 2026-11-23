@@ -477,7 +477,9 @@ export function specializeComponent(
     }
     const binding = scope.model.scopes.bindingOf(node.callee);
     if (!binding || !isTopLevel(binding, scope.model)) return undefined;
-    const type = valueAt(node.arguments[0]);
+    const [argument] = node.arguments;
+    if (!argument) return undefined;
+    const type = valueAt(argument);
     if (
       type === UNKNOWN ||
       type.size === 0 ||
@@ -496,7 +498,9 @@ export function specializeComponent(
       return;
     }
     const first = args[0];
-    const last = args[args.length - 1];
+    const last = args.at(-1);
+    // Not every argument is pure, so there is at least one.
+    if (!first || !last) return;
     edits.push({
       start: call.start,
       end: call.end,
@@ -1033,7 +1037,8 @@ function unrenderedImports(code: string): string[] {
   walk(ast, {
     enter(node, parent) {
       if (node.type === "ImportDeclaration") return SKIP;
-      if (node.type === "Component") used.add(node.name.split(".")[0]);
+      if (node.type === "Component")
+        used.add(node.name.split(".")[0] ?? node.name);
       if (node.type === "Identifier" && isReference(node, parent)) {
         used.add(node.name);
       }
@@ -1093,7 +1098,7 @@ function countReads(
         node.type === "TransitionDirective" ||
         node.type === "AnimateDirective"
       ) {
-        const name = node.name.split(".")[0];
+        const name = node.name.split(".")[0] ?? node.name;
         bump(reads, name);
         if (propReads) bump(propReads, name);
       }

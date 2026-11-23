@@ -65,7 +65,7 @@ export type SveltePruneOptions = {
    * Vite, Rollup and Rolldown only: webpack and Rspack ignore it.
    * @default true
    */
-  hydration?: boolean;
+  hydration?: boolean | undefined;
 };
 
 const DEFAULT_CONTENT = [
@@ -162,7 +162,7 @@ async function resolveAliases(
   for (const { file, code } of files) {
     if (!code.includes(".svelte")) continue;
     for (const [, source] of code.matchAll(ALIAS_SVELTE_IMPORT)) {
-      if (library.isComponentFile(source)) continue;
+      if (source === undefined || library.isComponentFile(source)) continue;
       pending.push(
         resolve(source, file).then(
           (id) => {
@@ -270,7 +270,11 @@ export function createComponentOptimizer(
       root: string,
       /** The bundler's resolver, for aliased imports (`$lib/X.svelte`). */
       resolve?: ImportResolver,
-    ): Promise<{ warning?: string; info?: string; report?: string[] }> {
+    ): Promise<{
+      warning?: string | undefined;
+      info?: string | undefined;
+      report?: string[] | undefined;
+    }> {
       build = newBuild(root);
       const svelteMajor = pruneHydration
         ? installedMajor("svelte", root)
@@ -449,7 +453,7 @@ export function createComponentOptimizer(
     load(id: string): RewrittenSource | undefined {
       if (build.sources.size === 0) return undefined;
       // Svelte's style sub-modules (`?svelte&type=style`) aren't the source.
-      const [file, query = ""] = id.split("?");
+      const [file = id, query = ""] = id.split("?");
       if (query.includes("svelte")) return undefined;
       return build.sources.get(real(file));
     },

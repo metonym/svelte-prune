@@ -121,11 +121,9 @@ function resolveWith(compiler: WebpackCompiler): ImportResolver | undefined {
 // The built loader next to this file, or its source in a checkout; the
 // built name is a literal URL so the bundler builds the loader too.
 const LOADER = (() => {
-  const candidates = [
-    fileURLToPath(new URL("./loader.js", import.meta.url)),
-    fileURLToPath(new URL("./loader.ts", import.meta.url)),
-  ];
-  return candidates.find((file) => existsSync(file)) ?? candidates[0];
+  const built = fileURLToPath(new URL("./loader.js", import.meta.url));
+  const source = fileURLToPath(new URL("./loader.ts", import.meta.url));
+  return existsSync(built) || !existsSync(source) ? built : source;
 })();
 
 /**
@@ -153,7 +151,11 @@ export class SveltePrunePlugin {
   ) {
     this.spec = library;
     this.options = options;
-    this.names = { ...DEFAULT_NAMES, loader: LOADER, ...names };
+    this.names = {
+      plugin: names.plugin ?? DEFAULT_NAMES.plugin,
+      failure: names.failure ?? DEFAULT_NAMES.failure,
+      loader: names.loader ?? LOADER,
+    };
   }
 
   public apply(compiler: WebpackCompiler): void {

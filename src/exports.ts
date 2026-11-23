@@ -15,7 +15,11 @@ export type Export =
    * A namespace, or a component with members
    * (`Object.assign(Root, { Item })`) keyed `self`.
    */
-  | { kind: "members"; self?: string; member: (name: string) => Export }
+  | {
+      kind: "members";
+      self?: string | undefined;
+      member: (name: string) => Export;
+    }
   /** Something that holds none of the library's components. */
   | { kind: "value" }
   /** Anything, a component or something that holds one included. */
@@ -304,6 +308,7 @@ export function createExportResolver(src: string): ExportResolver {
             callee.property.type === "Identifier" &&
             callee.property.name === "assign" &&
             args.length === 2 &&
+            args[0] !== undefined &&
             args[1]?.type === "ObjectExpression"
           ) {
             const root = holdingOf(args[0]);

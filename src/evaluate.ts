@@ -75,8 +75,8 @@ export function createScope(
   usage: ComponentUsage,
   context: ContextResolver,
   options: {
-    imported?: ReadonlyMap<string, Value>;
-    svelteMajor?: number;
+    imported?: ReadonlyMap<string, Value> | undefined;
+    svelteMajor?: number | undefined;
   } = {},
 ): EvalScope {
   return {
@@ -148,9 +148,10 @@ function nestedSource(
           parameter.start <= node.start && node.end <= parameter.end,
       );
       const calls = snippetCalls(declaration, model);
-      if (index < 0 || !calls) return undefined;
+      const pattern = declaration.parameters[index];
+      if (!pattern || !calls) return undefined;
       return {
-        pattern: declaration.parameters[index],
+        pattern,
         value: (scope) => {
           let value: Value = possible();
           for (const call of calls) {
@@ -490,7 +491,11 @@ export function isPropsObject(node: Identifier, scope: EvalScope): boolean {
   );
 }
 
-export type PassedProp = { value: Value; maybeAbsent: boolean; why?: string };
+export type PassedProp = {
+  value: Value;
+  maybeAbsent: boolean;
+  why?: string | undefined;
+};
 
 /** `undefined` when usage is open; rest objects hold only undeclared keys. */
 function passedProps(
@@ -770,8 +775,10 @@ export function evaluate(node: Node | Expression, scope: EvalScope): Value {
         evaluate(node.right, scope),
       );
 
-    case "SequenceExpression":
-      return evaluate(node.expressions[node.expressions.length - 1], scope);
+    case "SequenceExpression": {
+      const last = node.expressions.at(-1);
+      return last ? evaluate(last, scope) : UNKNOWN;
+    }
 
     case "CallExpression":
       return evaluateCall(node, scope);
@@ -913,7 +920,9 @@ export function builtinCall(
   }
   if (!ARRAY_METHODS.has(name)) return undefined;
   if (object.type === "Super" || node.arguments.length !== 1) return undefined;
-  if (name !== "includes" && !inertCallback(node.arguments[0])) {
+  const [callback] = node.arguments;
+  if (!callback) return undefined;
+  if (name !== "includes" && !inertCallback(callback)) {
     return undefined;
   }
   const receiver = evaluate(object, scope);
@@ -955,7 +964,9 @@ function evaluateBuiltin(
         args.map((a) => evaluate(a, scope)),
       );
     case "includes": {
-      const needle = evaluate(args[0], scope);
+      const [first] = args;
+      if (!first) return UNKNOWN;
+      const needle = evaluate(first, scope);
       if (needle === UNKNOWN) return UNKNOWN;
       let result: Value = possible();
       for (const p of builtin.arrays) {

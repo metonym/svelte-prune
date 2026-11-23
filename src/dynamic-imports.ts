@@ -105,7 +105,7 @@ export function textDynamicImports(
     if (literal) {
       calls.push({
         kind,
-        source: literal[2],
+        source: literal[2] ?? null,
         start,
         end: LITERAL_ARGUMENT.lastIndex,
       });

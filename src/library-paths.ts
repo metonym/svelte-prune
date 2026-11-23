@@ -117,7 +117,7 @@ export type LibrarySpec = {
 export type LibraryImport = {
   id: string;
   importer: string;
-  specifier?: string;
+  specifier?: string | undefined;
 };
 
 const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\/]/g;

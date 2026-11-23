@@ -19,7 +19,7 @@ export function collectLibraryImports(
   let all = false;
   const add = (from: string, names: () => Iterable<string>) => {
     const direct = patterns.directComponentName.exec(from);
-    if (direct) into.add(direct[1]);
+    if (direct?.[1]) into.add(direct[1]);
     else if (from === spec.name) {
       for (const name of names()) {
         if (name === "*") all = true;
