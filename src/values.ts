@@ -6,15 +6,15 @@
  * Some object, array, or function: truthy, never nullish, never `===` a
  * primitive.
  */
-export const OBJECT = Symbol("object");
+export const OBJECT: unique symbol = Symbol("object");
 
 /**
  * A `[]` nothing mutates or lets escape: `OBJECT`, but to `.length` and
  * `{#each}`.
  */
-export const EMPTY_ARRAY = Symbol("empty array");
+export const EMPTY_ARRAY: unique symbol = Symbol("empty array");
 
-export const UNKNOWN = Symbol("unknown");
+export const UNKNOWN: unique symbol = Symbol("unknown");
 
 /**
  * A literal nothing mutates or lets escape. Interned by `shape`, so equal
@@ -56,8 +56,8 @@ export function possible(...values: Primitive[]): Value {
   return (values.length === 1 && SINGLETONS.get(values[0])) || new Set(values);
 }
 
-export const UNDEFINED = possible(undefined);
-export const BOOLEAN = possible(true, false);
+export const UNDEFINED: Value = possible(undefined);
+export const BOOLEAN: Value = possible(true, false);
 const EMPTY = possible();
 
 export function join(a: Value, b: Value): Value {

@@ -140,7 +140,30 @@ function perSpec<T>(make: (spec: LibrarySpec) => T): (spec: LibrarySpec) => T {
 
 const libraryPatterns = perSpec(patternsOf);
 
-function patternsOf(spec: LibrarySpec) {
+function patternsOf(spec: LibrarySpec): {
+  /** A computed `import()`'s arguments that name the package. */
+  argument: RegExp;
+  directComponentPath: RegExp;
+  contextKey: RegExp;
+  /**
+   * A specifier of one of its modules that's neither a component nor a
+   * stylesheet.
+   */
+  valueSubpath: RegExp;
+  /** An import of one of its modules that isn't a component. */
+  scriptSpecifier: RegExp;
+  barrelImport: RegExp;
+  barrelSpecifier: RegExp;
+  directComponentSpecifier: RegExp;
+  /** Imports that are components: passing one as a prop passes an object. */
+  componentSource: RegExp;
+  /** An import or `require` of it in a file the lexer can't read. */
+  importText: RegExp;
+  dynamicImport: RegExp;
+  directComponentName: RegExp;
+  segment: RegExp;
+  srcSegment: RegExp;
+} {
   const name = escapeRegExp(spec.name);
   const component = `${name}\\/${escapeRegExp(spec.srcDir)}\\/`;
   return {
@@ -252,4 +275,6 @@ export class LibraryPaths {
   }
 }
 
-export const libraryPaths = perSpec((spec) => new LibraryPaths(spec));
+export const libraryPaths: (spec: LibrarySpec) => LibraryPaths = perSpec(
+  (spec) => new LibraryPaths(spec),
+);

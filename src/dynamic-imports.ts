@@ -80,7 +80,7 @@ const LITERAL_ARGUMENT = /\s*(["'`])([^"'`$]+)\1\s*\)/y;
 export function textDynamicImports(
   code: string,
   from = 0,
-  to = code.length,
+  to: number = code.length,
 ): DynamicImport[] {
   const calls: DynamicImport[] = [];
   TEXT_IMPORT.lastIndex = from;

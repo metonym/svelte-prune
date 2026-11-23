@@ -85,7 +85,7 @@ export function removeMatches(
   input: MappedText,
   pattern: RegExp,
   from = 0,
-  to = input.text.length,
+  to: number = input.text.length,
 ): MappedText {
   const edits: Splice[] = [];
   for (const match of input.text.slice(from, to).matchAll(pattern)) {

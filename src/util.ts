@@ -1,13 +1,13 @@
 import { realpathSync } from "node:fs";
 
-export const RE_EXT_SVELTE = /\.svelte$/;
+export const RE_EXT_SVELTE: RegExp = /\.svelte$/;
 
-export const RE_EXT_JS = /\.js$/;
+export const RE_EXT_JS: RegExp = /\.js$/;
 
 const RE_MODULE_QUERY = /[?#].*$/;
 
 /** `.css` and the preprocessor files a bundler compiles to CSS. */
-export const RE_EXT_STYLESHEET =
+export const RE_EXT_STYLESHEET: RegExp =
   /\.(css|scss|sass|less|styl|stylus|pcss|postcss)$/;
 
 export function isSvelteFile(id: string): id is `${string}.svelte` {

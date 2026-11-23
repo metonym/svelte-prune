@@ -32,7 +32,7 @@ const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
  * A tag that may make a fragment SVG or MathML; without one, nothing can
  * change.
  */
-export const FOREIGN_ELEMENT = new RegExp(
+export const FOREIGN_ELEMENT: RegExp = new RegExp(
   `<(?:svelte:element|${[...SVG, ...MATHML]
     .map((name) => name.replace(REGEXP_SPECIAL, "\\$&"))
     .join("|")})[\\s/>]`,

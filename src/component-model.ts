@@ -964,7 +964,7 @@ function reactiveStatements(ast: AST.Root): Map<Node, Guard[]> {
  * The reads `declareDestructured` makes: one of `null` or `undefined`
  * throws as the component starts, so it never renders with that value.
  */
-export const DESTRUCTURING_READS = new WeakSet<object>();
+export const DESTRUCTURING_READS: WeakSet<object> = new WeakSet<object>();
 
 /**
  * Each name becomes a read of its path from `read`; rest and computed keys
