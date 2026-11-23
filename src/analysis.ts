@@ -1,6 +1,10 @@
-/** The usage analysis and the rewrites it drives. The plugins load it lazily. */
+/**
+ * The usage analysis and the rewrites it drives. The plugins load it
+ * lazily.
+ */
 import { readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
+
 import {
   analyzeUsage,
   type UsageAnalysis,
@@ -12,22 +16,22 @@ import type { Scope } from "./evaluate";
 import { type Library, loadLibrary } from "./library";
 import {
   type LibraryImport,
-  type LibrarySpec,
   libraryPaths,
+  type LibrarySpec,
 } from "./library-paths";
 import { type SourceMap, toSourceMap } from "./mapped-text";
 import { listJsAndSvelteFiles } from "./package";
+import type { RenderedUsage } from "./shared-analysis";
 import {
   type Specialization,
-  type SpecializeOptions,
   specializeComponent,
+  type SpecializeOptions,
 } from "./specialize";
 import {
   libraryStylePruner,
   type SafelistEntry,
   type StylePruner,
 } from "./styles";
-import type { RenderedUsage } from "./shared-analysis";
 import type { CallSite } from "./usage";
 import { errorMessage, isSvelteFile, realpath, stripQuery } from "./util";
 import { formatValue, UNKNOWN } from "./values";
@@ -41,7 +45,10 @@ export type UsageResult = {
   isPruned(cls: string): boolean;
 };
 
-/** For a failed analysis's warning: the feature it turns off, and what happens instead. */
+/**
+ * For a failed analysis's warning: the feature it turns off, and what
+ * happens instead.
+ */
 export type Failure = { feature: string; fallback: string };
 
 function failure(
@@ -55,8 +62,8 @@ function failure(
 const NODE_MODULES = /[\\/]node_modules[\\/]/;
 
 /**
- * A bundled module as the analysis reads it: a `.svelte` file's source from
- * disk, anything else as the bundler hands it over. `undefined` for a
+ * A bundled module as the analysis reads it: a `.svelte` file's source
+ * from disk, anything else as the bundler hands it over. `undefined` for a
  * `.svelte` file's sub-module (`?svelte&type=style`).
  */
 function readModuleSource(
@@ -197,7 +204,10 @@ function toResult(analysis: UsageAnalysis, library: Library): UsageResult {
   };
 }
 
-/** `components` (names or paths) is the bundle; one no file renders keeps every variant. */
+/**
+ * `components` (names or paths) is the bundle; one no file renders keeps
+ * every variant.
+ */
 export async function analyzeFiles(input: {
   library: LibrarySpec;
   projectRoot: string;
@@ -334,7 +344,10 @@ export type RewrittenSource = { code: string; map: SourceMap };
 export type SpecializedComponents = {
   sources: Map<string, RewrittenSource>;
   edits: number;
-  /** App components whose props came from their analyzed call sites: nothing else may render them. */
+  /**
+   * App components whose props came from their analyzed call sites: nothing
+   * else may render them.
+   */
   closed: Set<string>;
   /** How many of the app's own components `sources` holds. */
   apps: number;
@@ -346,9 +359,9 @@ export type SpecializedComponents = {
   };
   report: () => string[];
   /**
-   * Whether the analysis read `importer`'s import of library module `id` (real
-   * paths): `false` for one it can't see (an alias), `true` for a module whose
-   * imports it doesn't read (a script, a stylesheet).
+   * Whether the analysis read `importer`'s import of library module `id`
+   * (real paths): `false` for one it can't see (an alias), `true` for a
+   * module whose imports it doesn't read (a script, a stylesheet).
    */
   readImport: (importer: string, id: string) => boolean;
   /**
@@ -360,7 +373,10 @@ export type SpecializedComponents = {
   usage: RenderedUsage;
 };
 
-/** Rewrites each library component `files` render, and each app component whose every call site they hold. */
+/**
+ * Rewrites each library component `files` render, and each app component
+ * whose every call site they hold.
+ */
 export async function specializeFiles(input: {
   library: LibrarySpec;
   projectRoot: string;
@@ -369,7 +385,10 @@ export async function specializeFiles(input: {
   /** Aliased `.svelte` imports the bundler resolved, by `importKey`. */
   resolvedImports?: ReadonlyMap<string, string>;
   failure: Failure;
-  /** Classes `pruneStyles` keeps whatever renders: ones the app builds from data. */
+  /**
+   * Classes `pruneStyles` keeps whatever renders: ones the app builds from
+   * data.
+   */
   safelist?: readonly SafelistEntry[];
 }): Promise<SpecializedComponents | { warning: string }> {
   let appUsage: AppUsage;

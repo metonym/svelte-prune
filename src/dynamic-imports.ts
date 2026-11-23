@@ -74,8 +74,8 @@ const LITERAL_ARGUMENT = /\s*(["'`])([^"'`$]+)\1\s*\)/y;
 
 /**
  * The calls in text that may not be a module (markup, or a file that
- * doesn't parse), from `from` to `to`: every match, in comments and strings
- * too, so none is missed. A computed call ends at the first `)`.
+ * doesn't parse), from `from` to `to`: every match, in comments and
+ * strings too, so none is missed. A computed call ends at the first `)`.
  */
 export function textDynamicImports(
   code: string,

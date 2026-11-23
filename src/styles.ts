@@ -6,8 +6,10 @@
  */
 import { globSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+
 import { filterCss } from "caligula";
 import { type ParsedSelector, parseSelectorList } from "caligula/selector";
+
 import {
   classTokensOf,
   isPrefixToken,
@@ -28,7 +30,10 @@ type PrunedStyles = {
 /** Removes the rules of `css` that need a class nothing can render. */
 export type StylePruner = (css: string) => PrunedStyles;
 
-/** The files `stylesheets` name, each `"<package>/<path>"` with `*` within a segment. */
+/**
+ * The files `stylesheets` name, each `"<package>/<path>"` with `*` within
+ * a segment.
+ */
 export function stylesheetFiles(
   stylesheets: readonly string[],
   projectRoot: string,
@@ -117,9 +122,15 @@ function unquote(text: string): string {
 
 /** What may read a custom property or `@keyframes` from outside the CSS. */
 type ExternalReads = {
-  /** Words (`[\w-]+`, `--x` included) in the app's files and the library's sources. */
+  /**
+   * Words (`[\w-]+`, `--x` included) in the app's files and the library's
+   * sources.
+   */
   words: Set<string>;
-  /** Custom property prefixes a source builds names from (`--tone-` in `` `--tone-${t}` ``). */
+  /**
+   * Custom property prefixes a source builds names from (`--tone-` in
+   * `` `--tone-${t}` ``).
+   */
   propertyPrefixes: string[];
 };
 
@@ -127,8 +138,8 @@ const WORD = /[\w-]+/g;
 /**
  * `--tone-` before `${…}` or a quote and `+`: a name built at runtime. Not
  * after a word character, `-` or `!`: that's the end of a class
- * (`` `x--btn--${kind}` ``) or an HTML comment (`` `<!--${id}-->` ``, which
- * Svelte's server runtime writes), not a property name.
+ * (`` `x--btn--${kind}` ``) or an HTML comment (`` `<!--${id}-->` ``,
+ * which Svelte's server runtime writes), not a property name.
  */
 const BUILT_PROPERTY = /(?<![\w!-])(--[\w-]*)(?:\$\{|["'`]\s*\+)/g;
 
@@ -375,7 +386,8 @@ export function libraryStylePruner(input: {
     }
   }
   // Only a class the library's tokens can name may go: a class they never
-  // read (one outside `classTokens`' namespace) is never known not to render.
+  // read (one outside `classTokens`' namespace) is never known not to
+  // render.
   const readable = (cls: string) =>
     cls.includes(tokens.marker) && tokens.text(cls).includes(`.${cls}`);
   const safelist = input.safelist ?? [];

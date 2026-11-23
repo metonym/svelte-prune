@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
 import { lexComponent, lexImportsExports } from "svelte-ast/lexer";
 import { extractIdentifiers } from "svelte-ast/walk";
+
 import { forEachNode, type Node, parseModule } from "./ast";
 import { relativeKey, resolveModule } from "./package-exports";
 
@@ -9,7 +11,10 @@ import { relativeKey, resolveModule } from "./package-exports";
 export type Export =
   /** A component: its module key (`button/button.svelte`). */
   | { kind: "component"; key: string }
-  /** A namespace, or a component with members (`Object.assign(Root, { Item })`) keyed `self`. */
+  /**
+   * A namespace, or a component with members
+   * (`Object.assign(Root, { Item })`) keyed `self`.
+   */
   | { kind: "members"; self?: string; member: (name: string) => Export }
   /** Something that holds none of the library's components. */
   | { kind: "value" }
@@ -26,7 +31,10 @@ export type ExportResolver = {
   importOf(from: string, source: string, name: string): Export;
 };
 
-/** Rendering an object with members renders its own component, if it has one. */
+/**
+ * Rendering an object with members renders its own component, if it has
+ * one.
+ */
 export function memberOf(exported: Export, path: readonly string[]): Export {
   let current = exported;
   for (const name of path) {
@@ -60,9 +68,9 @@ type ModuleInfo = {
 };
 
 /**
- * A component is a `.svelte` file's default export; objects of components and
- * namespaces have members. Any other name holds no component only if its
- * module can't reach a `.svelte` file through its imports.
+ * A component is a `.svelte` file's default export; objects of components
+ * and namespaces have members. Any other name holds no component only if
+ * its module can't reach a `.svelte` file through its imports.
  */
 export function createExportResolver(src: string): ExportResolver {
   const infos = new Map<string, ModuleInfo | null>();
@@ -217,7 +225,10 @@ export function createExportResolver(src: string): ExportResolver {
     // Breaks cycles.
     const pending = new Set<string>();
 
-    /** Holds no component only when every name it mentions is the module's and holds none. */
+    /**
+     * Holds no component only when every name it mentions is the module's and
+     * holds none.
+     */
     const opaque = (node: Node | null | undefined): Export => {
       if (!node) return UNKNOWN_EXPORT;
       let holds = false;
@@ -375,7 +386,10 @@ export function createExportResolver(src: string): ExportResolver {
 }
 
 const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
-/** `export {}`, which the lexer returns as it does a statement it can't read. */
+/**
+ * `export {}`, which the lexer returns as it does a statement it can't
+ * read.
+ */
 const EMPTY_EXPORT = /^export\s*\{\s*\}\s*;?$/;
 
 /** Whether two exports render the same: both values, or one component. */

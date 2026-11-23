@@ -31,7 +31,10 @@ export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** The key a bundler-resolved import is recorded under: `import … from source` in file `from`. */
+/**
+ * The key a bundler-resolved import is recorded under:
+ * `import … from source` in file `from`.
+ */
 export function importKey(from: string, source: string): string {
   return `${from}\0${source}`;
 }

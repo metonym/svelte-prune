@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
 import { stripQuery } from "./util";
 
 /**
@@ -25,7 +26,10 @@ const HYDRATE = /export function hydrate\(\w+, \w+\)\s*\{/;
 export const hydrateRemoved = (plugin: string) =>
   `${plugin} removed hydrate() from this build (hydration: false). Mount the app with mount(), or build it without hydration: false.`;
 
-/** `hydration.js` without the writes to `hydrating`, if Svelte's source is as expected. */
+/**
+ * `hydration.js` without the writes to `hydrating`, if Svelte's source is
+ * as expected.
+ */
 function foldFlag(code: string): string | undefined {
   if (!code.includes(FLAG) || !SET_FLAG.test(code)) return undefined;
   const folded = code

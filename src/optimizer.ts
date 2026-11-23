@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, globSync, readFileSync } from "node:fs";
 import path from "node:path";
+
 import type {
   Failure,
   RewrittenSource,
@@ -10,8 +11,8 @@ import { collectLibraryImports } from "./imports";
 import {
   type LibraryImport,
   type LibraryPaths,
-  type LibrarySpec,
   libraryPaths,
+  type LibrarySpec,
 } from "./library-paths";
 import { installedMajor, packageSignature, requirePackageDir } from "./package";
 import { hydrateRemoved, pruneRuntime } from "./runtime";
@@ -23,14 +24,16 @@ export type SveltePruneOptions = {
    * Globs (relative to the project root) of every file that renders the
    * library's components; a module outside them that imports one fails the
    * build. Components imported from script, Markdown, MDX or Astro files
-   * keep every prop value. `node_modules` is skipped unless a pattern names it.
+   * keep every prop value. `node_modules` is skipped unless a pattern names
+   * it.
    * @default ["src/**\/*.{svelte,svx,md,mdx,astro,js,jsx,ts,tsx,mjs,mts,cjs,cts}"]
    */
   content?: string[];
 
   /**
    * Replace an `{#if}` whose only live branch is known with that branch.
-   * Svelte 5 only: Svelte 3/4 render whitespace differently without the block.
+   * Svelte 5 only: Svelte 3/4 render whitespace differently without the
+   * block.
    * @default true when the installed Svelte is 5 or later
    */
   unwrap?: boolean;
@@ -39,8 +42,9 @@ export type SveltePruneOptions = {
   silent?: boolean;
 
   /**
-   * Print what each build rewrote: edits, child components no longer rendered
-   * or bundled, and each call site's prop values. Independent of `silent`.
+   * Print what each build rewrote: edits, child components no longer
+   * rendered or bundled, and each call site's prop values. Independent of
+   * `silent`.
    * @default false
    */
   report?: boolean;
@@ -74,11 +78,17 @@ const LEXABLE = /\.(svelte|[cm]?[jt]sx?)$/;
 const ALIAS_SVELTE_IMPORT =
   /\b(?:from|import)\s*["']([^"'./][^"']*\.svelte)["']/g;
 
-/** With Tailwind installed, the library is written to `node_modules/.svelte-prune` for it to scan. */
+/**
+ * With Tailwind installed, the library is written to
+ * `node_modules/.svelte-prune` for it to scan.
+ */
 const usesTailwind = (spec: LibrarySpec, root: string) =>
   spec.tailwind === true && installedMajor("tailwindcss", root) !== undefined;
 
-/** For builds that don't rewrite (development): the library as it is, for Tailwind. */
+/**
+ * For builds that don't rewrite (development): the library as it is, for
+ * Tailwind.
+ */
 export async function writeOriginalsForTailwind(
   spec: LibrarySpec,
   root: string,
@@ -110,8 +120,9 @@ function globContent(patterns: string[], cwd: string): string[] {
 }
 
 /**
- * Virtual modules are JS, so they're lexed too: merely mentioning the package
- * doesn't count. In Markdown, MDX or Astro any import of it counts.
+ * Virtual modules are JS, so they're lexed too: merely mentioning the
+ * package doesn't count. In Markdown, MDX or Astro any import of it
+ * counts.
  */
 function importsLibrary(
   library: LibraryPaths,
@@ -134,7 +145,10 @@ export type ImportResolver = (
   importer: string,
 ) => Promise<string | undefined>;
 
-/** Aliased `.svelte` imports (`$lib/Card.svelte`) that land on one of `files`, by `importKey`. */
+/**
+ * Aliased `.svelte` imports (`$lib/Card.svelte`) that land on one of
+ * `files`, by `importKey`.
+ */
 async function resolveAliases(
   library: LibraryPaths,
   files: Array<{ file: string; code: string }>,
@@ -192,9 +206,15 @@ function newBuild(root: string) {
     closed: new Set<string>(),
     /** Closed components rendered from somewhere else, and by what. */
     escaped: new Map<string, string[]>(),
-    /** Analyzed files, by name, and the imports of the library in them it didn't read. */
+    /**
+     * Analyzed files, by name, and the imports of the library in them it
+     * didn't read.
+     */
     unread: new Map<string, Set<string>>(),
-    /** Rewritten script modules, by name, and what imports them from outside the library. */
+    /**
+     * Rewritten script modules, by name, and what imports them from outside
+     * the library.
+     */
     scriptImporters: new Map<string, Set<string>>(),
     readImport: (() => true) as SpecializedComponents["readImport"],
     realpaths: new Map<string, string | undefined>(),
@@ -217,11 +237,17 @@ export function createComponentOptimizer(
   const content = options?.content ?? DEFAULT_CONTENT;
   const pruneHydration = options?.hydration === false;
   let build = newBuild(process.cwd());
-  /** Watch rebuilds and SvelteKit's second build reuse it unless `content` changed. */
+  /**
+   * Watch rebuilds and SvelteKit's second build reuse it unless `content`
+   * changed.
+   */
   let last:
     | { hash: string; result: SpecializedComponents | { warning: string } }
     | undefined;
-  /** What Tailwind's directory was last written from: unchanged, it needn't be rewritten. */
+  /**
+   * What Tailwind's directory was last written from: unchanged, it needn't
+   * be rewritten.
+   */
   let written:
     | { result: SpecializedComponents | { warning: string }; key: string }
     | undefined;
@@ -396,7 +422,10 @@ export function createComponentOptimizer(
       return pruned;
     },
 
-    /** With `hydration: false`, an error when any of `chunks` (name to code) can still hydrate. */
+    /**
+     * With `hydration: false`, an error when any of `chunks` (name to code)
+     * can still hydrate.
+     */
     checkHydration(chunks: Map<string, string>): string | undefined {
       if (!pruneHydration) return undefined;
       const marker = hydrateRemoved(name);
@@ -425,7 +454,10 @@ export function createComponentOptimizer(
       return build.sources.get(real(file));
     },
 
-    /** Records module `id` if it renders the library without having been analyzed. */
+    /**
+     * Records module `id` if it renders the library without having been
+     * analyzed.
+     */
     check(id: string, code: string): void {
       if (build.sources.size === 0) return;
       const file = stripQuery(id);
@@ -442,7 +474,8 @@ export function createComponentOptimizer(
 
     /**
      * A rewritten script module (its tailwind-variants tables) may only be
-     * imported by the library: the analysis reads the app's imports of the barrel.
+     * imported by the library: the analysis reads the app's imports of the
+     * barrel.
      */
     checkScriptImporters(
       id: string,

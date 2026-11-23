@@ -36,8 +36,9 @@ function resolveWithPnp(name: string, from: string): string | undefined {
 }
 
 /**
- * Searches from `from`, then from this package (hoisted in a monorepo). Walks
- * `require.resolve.paths`: an `exports` map may block `<name>/package.json`.
+ * Searches from `from`, then from this package (hoisted in a monorepo).
+ * Walks `require.resolve.paths`: an `exports` map may block
+ * `<name>/package.json`.
  */
 function resolvePackageDir(
   name: string,
@@ -91,7 +92,10 @@ function readVersion(root: string): unknown {
   }
 }
 
-/** A linked checkout (`bun link`, `workspace:`) changes under a fixed version. */
+/**
+ * A linked checkout (`bun link`, `workspace:`) changes under a fixed
+ * version.
+ */
 const isLinked = (real: string) =>
   !real.split(path.sep).includes("node_modules");
 
@@ -103,7 +107,10 @@ export function isLinkedCheckout(root: string): boolean {
   }
 }
 
-/** Cache key for a package's contents: real path and version, plus `srcDir` mtimes when linked. */
+/**
+ * Cache key for a package's contents: real path and version, plus `srcDir`
+ * mtimes when linked.
+ */
 export async function packageSignature(
   root: string,
   srcDir: string,

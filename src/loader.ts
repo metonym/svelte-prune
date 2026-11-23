@@ -21,7 +21,10 @@ type LoaderContext = {
   callback(error: null, code: string, map?: unknown): void;
 };
 
-/** The pre-loader `SveltePrunePlugin` adds on `.svelte` files and the library's script modules: serves the ones it rewrote. */
+/**
+ * The pre-loader `SveltePrunePlugin` adds on `.svelte` files and the
+ * library's script modules: serves the ones it rewrote.
+ */
 export default function sveltePruneLoader(
   this: LoaderContext,
   source: string,

@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import { lexImportsExports } from "svelte-ast/lexer";
 import {
   type AST,
@@ -6,6 +7,7 @@ import {
   forEachChild,
   locate,
 } from "svelte-ast/walk";
+
 import { forEachNode, type Node, parse } from "./ast";
 import { buildComponentModel, type ComponentModel } from "./component-model";
 import {
@@ -62,7 +64,10 @@ export type ModuleUsage = {
   readsLibraryContext?: boolean;
   file?: string;
   libraryImports?: LibraryImports;
-  /** Names it imports from the barrel that aren't components; `"any"` if it may read any. */
+  /**
+   * Names it imports from the barrel that aren't components; `"any"` if it
+   * may read any.
+   */
   libraryValues?: Set<string> | "any";
 };
 
@@ -117,8 +122,8 @@ export function isAppComponent(key: string): boolean {
 type AppImports = { readonly from: string; readonly apps: AppComponents };
 
 /**
- * Exact only for a known relative or bundler-resolved path. An alias matches
- * every file of that name; `./Card` may be `Card.svelte` or
+ * Exact only for a known relative or bundler-resolved path. An alias
+ * matches every file of that name; `./Card` may be `Card.svelte` or
  * `Card/index.svelte`, if the bundler adds the extension.
  */
 function resolveAppImport(
@@ -637,8 +642,8 @@ function namedElsewhere(code: string, name: string): boolean {
 /**
  * A component used as a value or spread into is open, and so is an app
  * component imported but never named; a library component the file's text
- * names only in its import has no site. A file that doesn't parse opens all
- * its imports.
+ * names only in its import has no site. A file that doesn't parse opens
+ * all its imports.
  */
 export function collectSvelteUsage(
   code: string,

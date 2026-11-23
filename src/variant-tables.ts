@@ -1,15 +1,18 @@
 /**
- * tailwind-variants tables (`export const button = tv({ variants: … })`) in
- * a library's script modules, rewritten for the values the app's live call
- * sites pass: variant keys no call can select go, with the compound variants
- * that need one, and a table nothing calls keeps no classes at all. Strings
- * that never render then neither ship nor reach Tailwind's scanner.
+ * tailwind-variants tables (`export const button = tv({ variants: … })`)
+ * in a library's script modules, rewritten for the values the app's live
+ * call sites pass: variant keys no call can select go, with the compound
+ * variants that need one, and a table nothing calls keeps no classes at
+ * all. Strings that never render then neither ship nor reach Tailwind's
+ * scanner.
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 import { lexComponent, lexImportsExports } from "svelte-ast/lexer";
 import type { Binding } from "svelte-ast/scope";
 import { walk } from "svelte-ast/walk";
+
 import type { Node } from "./ast";
 import type { ModuleUsage } from "./call-sites";
 import {
@@ -25,14 +28,14 @@ import { evaluate, type Scope } from "./evaluate";
 import { createExportResolver } from "./exports";
 import type { Library } from "./library";
 import { walkLive } from "./live-walk";
-import { type MappedText, type Splice, sliceOf, splice } from "./mapped-text";
+import { type MappedText, sliceOf, type Splice, splice } from "./mapped-text";
 import { listJsAndSvelteFiles, packageSignature } from "./package";
 import {
   isObject,
   isShape,
   join,
-  type Primitive,
   possible,
+  type Primitive,
   UNDEFINED,
   UNKNOWN,
   type Value,
@@ -50,7 +53,10 @@ type Table = {
   config: Node;
   /** Each variant's keys, or `null` for one that isn't an object literal. */
   variants: Map<string, Node[] | null>;
-  /** Literal defaults; `UNKNOWN` for one that isn't, and for all if `defaultVariants` can't be read. */
+  /**
+   * Literal defaults; `UNKNOWN` for one that isn't, and for all if
+   * `defaultVariants` can't be read.
+   */
   defaults: Map<string, Literal | typeof UNKNOWN> | typeof UNKNOWN;
   compounds: Node[];
   /** A call returns an object of slot functions, not a string. */
@@ -358,7 +364,8 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
   };
   const lexed = files.map((file, i) => lex(file, codes[i]));
 
-  // Follow the tables through re-exports and imports until nothing new holds one.
+  // Follow the tables through re-exports and imports until nothing new holds
+  // one.
   const handled = new Set<string>();
   for (let changed = true; changed;) {
     changed = false;
@@ -414,7 +421,8 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
       }
     }
   }
-  // What `import()`, `require()` and `import.meta.glob()` load is read whole.
+  // What `import()`, `require()` and `import.meta.glob()` load is read
+  // whole.
   for (const [i, file] of files.entries()) {
     const calls = file.endsWith(".svelte")
       ? componentDynamicImports(codes[i])
@@ -498,7 +506,10 @@ function isExported(model: ComponentModel, name: string): boolean {
   );
 }
 
-/** The name `export { local as name }` exports it by; `undefined` for any other parent. */
+/**
+ * The name `export { local as name }` exports it by; `undefined` for any
+ * other parent.
+ */
 function exportedAs(parent: Node): string | undefined {
   if (parent.type !== "ExportSpecifier") return undefined;
   const { exported } = parent;
@@ -517,7 +528,10 @@ function moduleBinding(
   return model.scopes.module.declarations.get(local) ?? null;
 }
 
-/** The names a script module exports binding `local` by, or `undefined` if it reads it. */
+/**
+ * The names a script module exports binding `local` by, or `undefined` if
+ * it reads it.
+ */
 function reExportsOf(
   src: string,
   file: string,
@@ -571,7 +585,10 @@ function parentsOf(model: ComponentModel): Map<Node, Node | null> {
   return parents;
 }
 
-/** The props `value`, a call's argument, passes: `undefined` if it isn't a known object. */
+/**
+ * The props `value`, a call's argument, passes: `undefined` if it isn't a
+ * known object.
+ */
 function propsOf(value: Value): Props | undefined {
   if (value === UNKNOWN) return undefined;
   const objects: Array<ReadonlyMap<string, Value>> = [];
@@ -597,9 +614,9 @@ function propsOf(value: Value): Props | undefined {
 type Watch = { id: TableId; slot: boolean };
 
 /**
- * Each call of a table `model` imports, and of the slot functions it returns;
- * `undefined` once a use can't be read (the table, or a result with slots,
- * used as a value).
+ * Each call of a table `model` imports, and of the slot functions it
+ * returns; `undefined` once a use can't be read (the table, or a result
+ * with slots, used as a value).
  */
 function watchCalls(
   model: ComponentModel,
@@ -646,7 +663,10 @@ function watchCalls(
   return watched;
 }
 
-/** Watches the slot calls of `call`'s result; `false` if the result is used otherwise. */
+/**
+ * Watches the slot calls of `call`'s result; `false` if the result is used
+ * otherwise.
+ */
 function watchSlots(
   model: ComponentModel,
   call: Node,
@@ -716,7 +736,10 @@ function watchSlots(
 
 // ---------- rewriting ----------
 
-/** The key `tv()` looks a value up by (`falsyToString`), or `undefined` for none. */
+/**
+ * The key `tv()` looks a value up by (`falsyToString`), or `undefined` for
+ * none.
+ */
 function keyOf(p: Literal): string | undefined {
   if (p === null) return undefined;
   const key = p === false ? "false" : p === true ? "true" : p === 0 ? "0" : p;
@@ -767,7 +790,10 @@ function keptKeys(
   return keys;
 }
 
-/** Whether `actual` matches compound condition `expected` (`matchesCompoundValue`). */
+/**
+ * Whether `actual` matches compound condition `expected`
+ * (`matchesCompoundValue`).
+ */
 function matches(expected: Literal, actual: Primitive): boolean {
   const nullishOrFalse = (v: Primitive) => v == null || v === false;
   return (
@@ -816,7 +842,10 @@ function compoundLive(
   return true;
 }
 
-/** Removes `drop` from a list of properties or elements; a trailing comma may stay. */
+/**
+ * Removes `drop` from a list of properties or elements; a trailing comma
+ * may stay.
+ */
 function removals(list: readonly Node[], drop: ReadonlySet<Node>): Splice[] {
   const edits: Splice[] = [];
   for (const [i, node] of list.entries()) {

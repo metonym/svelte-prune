@@ -1,17 +1,21 @@
 import { statSync } from "node:fs";
 import path from "node:path";
+
 import {
   createExportResolver,
   type Export,
   type ExportResolver,
 } from "./exports";
-import { LibraryPaths, type LibrarySpec, libraryPaths } from "./library-paths";
+import { LibraryPaths, libraryPaths, type LibrarySpec } from "./library-paths";
 import { installedMajor, requirePackageDir } from "./package";
 import { readPackageExports } from "./package-exports";
 
 export class Library extends LibraryPaths {
   readonly root: string;
-  /** Export name -> module key in `srcDir` (`Button` -> `Button/Button.svelte`). */
+  /**
+   * Export name -> module key in `srcDir` (`Button` ->
+   * `Button/Button.svelte`).
+   */
   readonly components: ReadonlyMap<string, string>;
 
   constructor(
@@ -37,7 +41,10 @@ export class Library extends LibraryPaths {
 
   private svelte?: { major: number | undefined };
 
-  /** Resolved from the library's root: it decides whether content is passed as `children` (Svelte 5). */
+  /**
+   * Resolved from the library's root: it decides whether content is passed
+   * as `children` (Svelte 5).
+   */
   get svelteMajor(): number | undefined {
     this.svelte ??= { major: installedMajor("svelte", this.root) };
     return this.svelte.major;
@@ -49,7 +56,10 @@ const componentsCache = new Map<
   { mtimeMs: number; components: ReadonlyMap<string, string> }
 >();
 
-/** Cached by the barrel's mtime, so a linked checkout edited between watch rebuilds is reread. */
+/**
+ * Cached by the barrel's mtime, so a linked checkout edited between watch
+ * rebuilds is reread.
+ */
 export function libraryAt(spec: LibrarySpec, root: string): Library {
   const barrel = path.join(root, spec.srcDir, spec.barrel);
   const { mtimeMs } = statSync(barrel);

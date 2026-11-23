@@ -1,13 +1,15 @@
 /**
  * Tailwind generates a utility for every class string it scans, and an app
  * points it at the library's files on disk. With Tailwind installed, each
- * build writes what of the library can render to `node_modules/.svelte-prune/<name>`:
- * its script modules and the components that can render, rewritten where
- * svelte-prune rewrote them. An `@source` (or v3 `content` glob) there, in place
- * of the package's own directory, leaves out the classes that can't render.
+ * build writes what of the library can render to
+ * `node_modules/.svelte-prune/<name>`: its script modules and the
+ * components that can render, rewritten where svelte-prune rewrote them.
+ * An `@source` (or v3 `content` glob) there, in place of the package's own
+ * directory, leaves out the classes that can't render.
  */
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+
 import type { Library } from "./library";
 import type { LibrarySpec } from "./library-paths";
 import { realpath } from "./util";
@@ -43,17 +45,18 @@ async function listFiles(dir: string): Promise<string[]> {
 }
 
 /**
- * The library's files as Tailwind should see them, by key: every module but
- * the components that can't render (one with a `<script module>` may be
- * imported for what it exports, so stays). Without `rewrite`, all of them as
- * they are.
+ * The library's files as Tailwind should see them, by key: every module
+ * but the components that can't render (one with a `<script module>` may
+ * be imported for what it exports, so stays). Without `rewrite`, all of
+ * them as they are.
  */
 async function sourcesFor(
   library: Library,
   rewrite: Rewrite | undefined,
 ): Promise<Map<string, string>> {
   const src = realpath(library.src) ?? library.src;
-  // A script module that mounts a component renders it where no call site shows.
+  // A script module that mounts a component renders it where no call site
+  // shows.
   const everyComponent =
     !rewrite || (await scriptRendersComponents(library)) !== undefined;
   const files = new Map<string, string>();
@@ -110,7 +113,10 @@ async function sync(dir: string, files: ReadonlyMap<string, string>) {
   );
 }
 
-/** Writes the library for Tailwind to scan; every module as it is without `rewrite`. */
+/**
+ * Writes the library for Tailwind to scan; every module as it is without
+ * `rewrite`.
+ */
 export async function writeTailwindSources(
   library: Library,
   root: string,

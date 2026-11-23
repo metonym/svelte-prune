@@ -1,4 +1,5 @@
 import type { Expression } from "svelte-ast/walk";
+
 import {
   appScope,
   collectSourceUsage,
@@ -18,8 +19,8 @@ import type { Library } from "./library";
 import {
   addCallSite,
   type CallSite,
-  type ComponentUsage,
   checkTarget,
+  type ComponentUsage,
   newComponentUsage,
 } from "./usage";
 import { isObject, UNKNOWN, type Value } from "./values";

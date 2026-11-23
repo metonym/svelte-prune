@@ -1,6 +1,10 @@
-/** Reads a package's barrel with the lexer alone, so callers never load the parser. */
+/**
+ * Reads a package's barrel with the lexer alone, so callers never load the
+ * parser.
+ */
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
+
 import { lexImportsExports } from "svelte-ast/lexer";
 
 /** Where a name a package's barrel exports is defined. */
@@ -59,7 +63,10 @@ export function relativeKey(src: string, file: string): string {
   return path.relative(src, file).split(path.sep).join("/");
 }
 
-/** Barrel exports of package `name`, followed through `index.js` re-export chains to their definitions. */
+/**
+ * Barrel exports of package `name`, followed through `index.js` re-export
+ * chains to their definitions.
+ */
 export function readPackageExports(
   root: string,
   {

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+
 import { analyzeScopes, type Binding, type Scopes } from "svelte-ast/scope";
 import {
   type AST,
@@ -12,6 +13,7 @@ import {
   type VariableDeclarator,
   walk,
 } from "svelte-ast/walk";
+
 import { forEachNode, type Node, parse, parseModule } from "./ast";
 import {
   createExportResolver,
@@ -73,13 +75,19 @@ export type ComponentModel = {
   /** Top-level names written outside their declaration (handlers, `bind:`). */
   readonly unknownNames: Set<string>;
   readonly unknownReasons: Map<string, string>;
-  /** Names written only by `name = …` under `if`s in `$:` (see `withGuardedWrites`). */
+  /**
+   * Names written only by `name = …` under `if`s in `$:` (see
+   * `withGuardedWrites`).
+   */
   readonly guardedWrites: Map<string, GuardedWrite[]>;
   /** Local binding -> library module key, for relative `.svelte` imports. */
   readonly componentImports: Map<string, string>;
   readonly otherImports: Set<string>;
   readonly packageImports: Map<string, string>;
-  /** Library objects with component members (`import * as L`, `Object.assign`). */
+  /**
+   * Library objects with component members (`import * as L`,
+   * `Object.assign`).
+   */
   readonly memberImports: Map<string, Export>;
   /** Imported `export const NAME = "…"` strings, for context keys. */
   readonly importedStrings: Map<string, string>;
@@ -91,12 +99,16 @@ export type ComponentModel = {
   providesUnknownContext: boolean;
   /** Per `setContext` call: an object literal's properties, or `null`. */
   readonly contextObjects: Map<string, Array<ContextObject | null>>;
-  /** Context properties it may write or hand on (`"*"`: all); see `readContextUse`. */
+  /**
+   * Context properties it may write or hand on (`"*"`: all); see
+   * `readContextUse`.
+   */
   readonly contextLeaks: Map<string, Set<string>>;
   readsUnknownContext: boolean;
   /**
    * Decides whether a literal a name holds stays known (see `Shape`).
-   * `$$props.x` adds `"$$props.x"`, any other `$$props` use `"*"`, both `full`.
+   * `$$props.x` adds `"$$props.x"`, any other `$$props` use `"*"`, both
+   * `full`.
    */
   readonly escapes: Map<string, Escape>;
   /** `rest` in `let { a, ...rest } = $props()`, unless reassigned. */
@@ -105,7 +117,8 @@ export type ComponentModel = {
 
 /**
  * `full`: the value is mutated, aliased, passed on or has a method called.
- * `paths`: paths read from it (`["[]", "text"]` for `item.text` in `{#each}`).
+ * `paths`: paths read from it (`["[]", "text"]` for `item.text` in
+ * `{#each}`).
  */
 type Escape = { full: boolean; readonly paths: string[][] };
 
@@ -127,8 +140,9 @@ type ContextObject = {
 };
 
 /**
- * A `writable` set only from `$:` and handed on only in a context object, so
- * it holds `initial` or one of `writes`. `readOnly`: handed on as `readonly(s)`.
+ * A `writable` set only from `$:` and handed on only in a context object,
+ * so it holds `initial` or one of `writes`. `readOnly`: handed on as
+ * `readonly(s)`.
  */
 export type MirroredStore = {
   readonly initial: Expression | null;
@@ -174,7 +188,10 @@ export function loadComponentModel(src: string, key: string): ComponentModel {
   return model;
 }
 
-/** A `.js` module's mtime is checked once per analysis, not per helper call. */
+/**
+ * A `.js` module's mtime is checked once per analysis, not per helper
+ * call.
+ */
 let analysisCount = 0;
 
 export function recheckScriptModels(): void {
@@ -227,7 +244,10 @@ const scriptCache = new Map<
   { mtimeMs: number; checked: number; model: ComponentModel | undefined }
 >();
 
-/** An importer may change any name a `.js` module exports, so those all escape. */
+/**
+ * An importer may change any name a `.js` module exports, so those all
+ * escape.
+ */
 export function loadScriptModel(
   src: string,
   key: string,
@@ -313,7 +333,10 @@ type ModuleImportResolver = (
   | { helper: () => Helper | undefined }
   | undefined;
 
-/** Only a lone-line `export const name = "…"`, declared once; no re-exports. */
+/**
+ * Only a lone-line `export const name = "…"`, declared once; no
+ * re-exports.
+ */
 function stringExport(
   src: string,
   module: string,
@@ -443,7 +466,8 @@ export function buildComponentModel(
     }
   }
 
-  // Writing identifier -> the name it makes unknown (`$count = 1`: `$count`).
+  // Writing identifier -> the name it makes unknown (`$count = 1`:
+  // `$count`).
   const writes = new Map<Identifier, string>();
   for (const binding of topLevelBindings(model.scopes)) {
     // `x` in `$: x = …` declares it, so it's no reference; it's a write
@@ -693,7 +717,10 @@ export function propertyName(
     : undefined;
 }
 
-/** Whether `node` is what `derived(node, …)` or `derived([…, node], …)` reads. */
+/**
+ * Whether `node` is what `derived(node, …)` or `derived([…, node], …)`
+ * reads.
+ */
 function derivedInput(
   model: ComponentModel,
   node: Node,
@@ -778,8 +805,8 @@ function mirroredStore(
 }
 
 /**
- * Nothing leaks for a property read into a subscribed-only `const`; any other
- * read leaks the property, and any other use of the context `"*"`.
+ * Nothing leaks for a property read into a subscribed-only `const`; any
+ * other read leaks the property, and any other use of the context `"*"`.
  */
 function readContextUse(
   model: ComponentModel,
@@ -902,7 +929,10 @@ function onlySubscribed(model: ComponentModel, id: Identifier): boolean {
   );
 }
 
-/** `$:` expression statements with their `if` guards; a loop, `&&` or function drops one. */
+/**
+ * `$:` expression statements with their `if` guards; a loop, `&&` or
+ * function drops one.
+ */
 function reactiveStatements(ast: AST.Root): Map<Node, Guard[]> {
   const found = new Map<Node, Guard[]>();
   const visit = (node: Node, guards: Guard[]): void => {
@@ -930,12 +960,15 @@ function reactiveStatements(ast: AST.Root): Map<Node, Guard[]> {
 }
 
 /**
- * The reads `declareDestructured` makes: one of `null` or `undefined` throws
- * as the component starts, so it never renders with that value.
+ * The reads `declareDestructured` makes: one of `null` or `undefined`
+ * throws as the component starts, so it never renders with that value.
  */
 export const DESTRUCTURING_READS = new WeakSet<object>();
 
-/** Each name becomes a read of its path from `read`; rest and computed keys are unknown. */
+/**
+ * Each name becomes a read of its path from `read`; rest and computed keys
+ * are unknown.
+ */
 function declareDestructured(
   model: ComponentModel,
   pattern: Pattern,
@@ -1241,7 +1274,10 @@ function declaredByPattern(stack: readonly Node[]): boolean {
   return false;
 }
 
-/** Array methods the evaluator models, which change nothing they're called on. */
+/**
+ * Array methods the evaluator models, which change nothing they're called
+ * on.
+ */
 export const ARRAY_METHODS: ReadonlySet<string> = new Set([
   "includes",
   "some",
@@ -1545,7 +1581,10 @@ export function contextKey(
     : undefined;
 }
 
-/** Not a nested scope (parameter, `{#each}`, `let:`, `{@const}`) reusing the name. */
+/**
+ * Not a nested scope (parameter, `{#each}`, `let:`, `{@const}`) reusing
+ * the name.
+ */
 export function isTopLevel(binding: Binding, model: ComponentModel): boolean {
   return (
     binding.scope === model.scopes.instance ||

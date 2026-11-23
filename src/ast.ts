@@ -1,15 +1,20 @@
-import { createParser } from "svelte-ast/core";
+import { createParser, type Parser } from "svelte-ast/core";
 import { typescript } from "svelte-ast/typescript";
 import { type AST, forEachChild } from "svelte-ast/walk";
 
 export type Node = AST.SvelteNode;
 
+// compat: typed by name, since the declarations would otherwise take
+// svelte-ast/core's AST, which clashes with svelte-ast/walk's.
+const parser: Parser = createParser({ typescript });
+
 /**
- * svelte-ast without its HTML entity table: the indexer reads class names, which
- * never hold a named character reference. TypeScript stays in, so a library
- * release that adds `<script lang="ts">` still parses.
+ * svelte-ast without its HTML entity table: the indexer reads class names,
+ * which never hold a named character reference. TypeScript stays in, so a
+ * library release that adds `<script lang="ts">` still parses.
  */
-export const { parse, parseModule } = createParser({ typescript });
+export const parse: Parser["parse"] = parser.parse;
+export const parseModule: Parser["parseModule"] = parser.parseModule;
 
 /** Calls `visit` on `node` and every descendant, depth-first. */
 export function forEachNode(

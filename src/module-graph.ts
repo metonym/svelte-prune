@@ -1,9 +1,10 @@
 import { lexImportsExports } from "svelte-ast/lexer";
+
 import { scriptDynamicImports } from "./dynamic-imports";
 import {
   type LibraryImport,
-  type LibrarySpec,
   libraryPaths,
+  type LibrarySpec,
 } from "./library-paths";
 import { stripQuery } from "./util";
 
@@ -36,8 +37,9 @@ function specifiersOf(code: string): Set<string> {
 }
 
 /**
- * The graph doesn't say which specifier made an edge, so importers are lexed
- * for aliases resolving into the library; those edges carry their `specifier`.
+ * The graph doesn't say which specifier made an edge, so importers are
+ * lexed for aliases resolving into the library; those edges carry their
+ * `specifier`.
  */
 export async function libraryImports(
   spec: LibrarySpec,

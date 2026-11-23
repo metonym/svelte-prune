@@ -1,4 +1,5 @@
 import type { Plugin } from "vite";
+
 import type { LibrarySpec } from "./library-paths";
 import { libraryImports } from "./module-graph";
 import {
@@ -20,10 +21,10 @@ import { shareAnalysis } from "./shared-analysis";
  * Runs on production builds only, before Svelte compiles. Rewritten
  * components come with source maps back to their original source. With
  * `styles` in `library`, the CSS a build emits loses the rules of the
- * library's stylesheets that nothing can match. With
- * Tailwind installed, every build (the dev server's included) writes what
- * of the library can render to `node_modules/.svelte-prune/<name>`, for Tailwind
- * to scan instead of the package.
+ * library's stylesheets that nothing can match. With Tailwind installed,
+ * every build (the dev server's included) writes what of the library can
+ * render to `node_modules/.svelte-prune/<name>`, for Tailwind to scan
+ * instead of the package.
  */
 export function sveltePrune(
   library: LibrarySpec,

@@ -1,3 +1,0 @@
-@import "tailwindcss";
-@plugin "@layerstack/tailwind/plugin";
-@source "../../node_modules/svelte-ux/dist";

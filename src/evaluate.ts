@@ -5,6 +5,7 @@ import {
   type Identifier,
   skipTypeWrappers,
 } from "svelte-ast/walk";
+
 import type { Node } from "./ast";
 import {
   ARRAY_METHODS,
@@ -22,8 +23,8 @@ import {
 } from "./component-model";
 import { type ComponentUsage, newComponentUsage } from "./usage";
 import {
-  BOOLEAN,
   binary,
+  BOOLEAN,
   EMPTY_ARRAY,
   flatMap,
   isNullish,
@@ -36,8 +37,8 @@ import {
   join,
   MAX_SHAPE_SIZE,
   OBJECT,
-  type Primitive,
   possible,
+  type Primitive,
   readProperty,
   shape,
   storeOf,
@@ -281,7 +282,10 @@ function liveWrites(
   );
 }
 
-/** Widens known objects to some object unless nothing can mutate them (see `ComponentModel.escapes`). */
+/**
+ * Widens known objects to some object unless nothing can mutate them (see
+ * `ComponentModel.escapes`).
+ */
 function keepIfContained(
   value: Value,
   name: string,
@@ -338,7 +342,10 @@ function ownValues(p: Primitive): Value {
   return value;
 }
 
-/** Binds `{#each}` `node`'s item while its body is walked; returns the unbind. */
+/**
+ * Binds `{#each}` `node`'s item while its body is walked; returns the
+ * unbind.
+ */
 export function bindEach(
   node: Extract<Node, { type: "EachBlock" }>,
   scope: Scope,
@@ -514,7 +521,10 @@ export function spreadProps(
   return spreadObjects(evaluate(argument, scope));
 }
 
-/** Each possibility must be an object literal or nullish; a key some lack may be absent. */
+/**
+ * Each possibility must be an object literal or nullish; a key some lack
+ * may be absent.
+ */
 function spreadObjects(value: Value): Map<string, PassedProp> | undefined {
   if (value === UNKNOWN || value.size === 0) return undefined;
   const objects: ReadonlyMap<string, Value>[] = [];
@@ -617,7 +627,8 @@ function whyUnknown(
 }
 
 /**
- * Lazy `whyUnknown` with the current `{#each}` bindings, which the walk has moved past by then.
+ * Lazy `whyUnknown` with the current `{#each}` bindings, which the walk
+ * has moved past by then.
  */
 export function whyUnknownLater(
   node: Node | Expression,
@@ -857,10 +868,11 @@ const isArrayValue = (p: Primitive): boolean =>
   p === EMPTY_ARRAY || (isShape(p) && p.kind === "array");
 
 /**
- * The built-in `node` calls, if it's one the evaluator models: `Array.isArray`,
- * `Math.round` and the like, or `includes`, `some` and `every` on what's
- * only ever arrays or strings (`some` and `every` with a callback written
- * inline that changes nothing). Then calling it runs nothing else.
+ * The built-in `node` calls, if it's one the evaluator models:
+ * `Array.isArray`, `Math.round` and the like, or `includes`, `some` and
+ * `every` on what's only ever arrays or strings (`some` and `every` with a
+ * callback written inline that changes nothing). Then calling it runs
+ * nothing else.
  */
 export function builtinCall(
   node: Extract<Node, { type: "CallExpression" }>,
@@ -1051,7 +1063,10 @@ function sameValueZero(a: Primitive, b: Primitive): boolean {
   return a === b || (Number.isNaN(a) && Number.isNaN(b));
 }
 
-/** A readable body: a prop default no site overrides, `const f = (…) => …`, or `function`. */
+/**
+ * A readable body: a prop default no site overrides, `const f = (…) => …`,
+ * or `function`.
+ */
 function knownFunction(name: string, scope: Scope): FunctionNode | undefined {
   const { model, usage } = scope;
   let node: Node | null | undefined;
@@ -1082,8 +1097,9 @@ const MAX_CALL_DEPTH = 8;
 let callDepth = 0;
 
 /**
- * Runs `fn` in `callee`, the module declaring it, with `args` read in `caller`.
- * Only `const`, `return`, and `if` around a lone `return` are followed.
+ * Runs `fn` in `callee`, the module declaring it, with `args` read in
+ * `caller`. Only `const`, `return`, and `if` around a lone `return` are
+ * followed.
  */
 function callValue(
   fn: FunctionNode,
@@ -1189,7 +1205,10 @@ function returned(
   return statement.argument ? evaluate(statement.argument, scope) : UNDEFINED;
 }
 
-/** `false` for patterns other than identifiers, defaults, and named-property objects. */
+/**
+ * `false` for patterns other than identifiers, defaults, and
+ * named-property objects.
+ */
 function bindParameter(
   pattern: Node,
   value: Value,
@@ -1289,7 +1308,10 @@ function evaluateMember(
   });
 }
 
-/** Keys as JS converts them (`obj[undefined]` reads `"undefined"`); primitives only. */
+/**
+ * Keys as JS converts them (`obj[undefined]` reads `"undefined"`);
+ * primitives only.
+ */
 function propertyKeys(value: Value): string[] | undefined {
   if (value === UNKNOWN) return undefined;
   const keys: string[] = [];

@@ -1,10 +1,12 @@
 import { lexImportsExports } from "svelte-ast/lexer";
-import { type LibrarySpec, libraryPaths } from "./library-paths";
+
+import { libraryPaths, type LibrarySpec } from "./library-paths";
 
 /**
- * Adds the components `source` imports or re-exports from `spec` to `into`.
- * Returns `true` when it may use ones it doesn't name: a namespace import,
- * `export *`, or a dynamic import of the barrel or a computed path.
+ * Adds the components `source` imports or re-exports from `spec` to
+ * `into`. Returns `true` when it may use ones it doesn't name: a namespace
+ * import, `export *`, or a dynamic import of the barrel or a computed
+ * path.
  */
 export function collectLibraryImports(
   spec: LibrarySpec,

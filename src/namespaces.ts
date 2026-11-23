@@ -8,6 +8,7 @@
  * closely enough to compare a component with its rewrite.
  */
 import { type AST, forEachChild } from "svelte-ast/walk";
+
 import type { Node } from "./ast";
 import type { MappedText } from "./mapped-text";
 
@@ -27,14 +28,20 @@ const MATHML = new Set(
 
 const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
 
-/** A tag that may make a fragment SVG or MathML; without one, nothing can change. */
+/**
+ * A tag that may make a fragment SVG or MathML; without one, nothing can
+ * change.
+ */
 export const FOREIGN_ELEMENT = new RegExp(
   `<(?:svelte:element|${[...SVG, ...MATHML]
     .map((name) => name.replace(REGEXP_SPECIAL, "\\$&"))
     .join("|")})[\\s/>]`,
 );
 
-/** Owners whose fragment Svelte reads through its blocks (`check_nodes_for_namespace`). */
+/**
+ * Owners whose fragment Svelte reads through its blocks
+ * (`check_nodes_for_namespace`).
+ */
 const RESETS = new Set([
   "Fragment",
   "Root",

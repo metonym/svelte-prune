@@ -1,6 +1,9 @@
 import { isSvelteFile, stripQuery } from "./util";
 
-/** How the analysis reads a library's class names: see `LibrarySpec.classTokens`. */
+/**
+ * How the analysis reads a library's class names: see
+ * `LibrarySpec.classTokens`.
+ */
 export type ClassTokens = {
   /** Text that may name a class contains it (`"x--"`). */
   marker: string;
@@ -24,7 +27,10 @@ export function isPrefixToken(token: string): boolean {
   return PREFIX_TOKEN.test(token);
 }
 
-/** For a library with `styles` and no `classTokens`: every word, as a class. */
+/**
+ * For a library with `styles` and no `classTokens`: every word, as a
+ * class.
+ */
 const PLAIN_CLASS_TOKENS: LibraryClassTokens = {
   marker: "",
   text: (text) =>
@@ -34,7 +40,10 @@ const PLAIN_CLASS_TOKENS: LibraryClassTokens = {
   },
 };
 
-/** How the analysis reads `spec`'s class names, or `undefined` for not at all. */
+/**
+ * How the analysis reads `spec`'s class names, or `undefined` for not at
+ * all.
+ */
 export function classTokensOf(
   spec: LibrarySpec,
 ): LibraryClassTokens | undefined {
@@ -49,13 +58,22 @@ export type LibrarySpec = {
   srcDir: string;
   /** Its barrel, in `srcDir`: `"index.js"`. */
   barrel: string;
-  /** Packages whose exports are components (an icon set): passing one as a prop passes an object. */
+  /**
+   * Packages whose exports are components (an icon set): passing one as a
+   * prop passes an object.
+   */
   componentPackages: readonly string[];
-  /** Its context key prefix (`"my-library:"`): an app module holding one may use its contexts. */
+  /**
+   * Its context key prefix (`"my-library:"`): an app module holding one may
+   * use its contexts.
+   */
   contextKeyPrefix: string;
   /** Names the library in messages: `"My Library"`. */
   label: string;
-  /** Names the tool in messages, and starts each warning and error: `"my-plugin"`. */
+  /**
+   * Names the tool in messages, and starts each warning and error:
+   * `"my-plugin"`.
+   */
   tool: string;
   /**
    * Reads class names, for pruning the library's styles: `text` a string
@@ -76,19 +94,26 @@ export type LibrarySpec = {
      * matches within a path segment: `"my-library/css/*.css"`.
      */
     stylesheets: readonly string[];
-    /** Classes to keep whatever renders: ones the app's page sets (`"my-body"`). */
+    /**
+     * Classes to keep whatever renders: ones the app's page sets
+     * (`"my-body"`).
+     */
     keep?: readonly string[];
   };
   /**
    * `true` for a library whose classes are Tailwind's: its tailwind-variants
    * tables are rewritten, and with Tailwind installed, every build (the dev
    * server's included) writes what of it can render to
-   * `node_modules/.svelte-prune/<name>`, for Tailwind to scan. @default false
+   * `node_modules/.svelte-prune/<name>`, for Tailwind to scan. @default
+   * false
    */
   tailwind?: boolean;
 };
 
-/** An edge of the bundler's module graph into library module `id`; `specifier` is what `importer` wrote, when the bundler says. */
+/**
+ * An edge of the bundler's module graph into library module `id`;
+ * `specifier` is what `importer` wrote, when the bundler says.
+ */
 export type LibraryImport = {
   id: string;
   importer: string;
@@ -126,7 +151,10 @@ function patternsOf(spec: LibrarySpec) {
       `(["'\`])(${escapeRegExp(spec.contextKeyPrefix)}[^"'\`\\s]+)\\1`,
       "g",
     ),
-    /** A specifier of one of its modules that's neither a component nor a stylesheet. */
+    /**
+     * A specifier of one of its modules that's neither a component nor a
+     * stylesheet.
+     */
     valueSubpath: new RegExp(
       `["'\`]${name}\\/(?![^"'\`]*\\.(?:svelte|css)["'\`])`,
     ),
@@ -200,7 +228,10 @@ export class LibraryPaths {
     return this.patterns.srcSegment.exec(id)?.[1].replace(BACKSLASH, "/");
   }
 
-  /** `moduleKey` of a component or the barrel, the modules whose imports the analysis reads. */
+  /**
+   * `moduleKey` of a component or the barrel, the modules whose imports the
+   * analysis reads.
+   */
   importKey(id: string): string | undefined {
     const key = this.moduleKey(stripQuery(id));
     return key && (key === this.barrelKey || isSvelteFile(key))
@@ -208,7 +239,10 @@ export class LibraryPaths {
       : undefined;
   }
 
-  /** Other imports resolving into the package (bundler aliases) are invisible to the analysis. */
+  /**
+   * Other imports resolving into the package (bundler aliases) are invisible
+   * to the analysis.
+   */
   isSpecifier(specifier: string): boolean {
     return specifier === this.name || specifier.startsWith(`${this.name}/`);
   }

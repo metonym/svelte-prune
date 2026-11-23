@@ -1,10 +1,10 @@
 /**
- * Internals carbon-preprocess-svelte builds on. Unstable: anything here may
- * change in any release. Nothing here loads the parser; the analysis and
- * its types are in `internal-analysis.ts`.
+ * Internals carbon-preprocess-svelte builds on. Unstable: anything here
+ * may change in any release. Nothing here loads the parser; the analysis
+ * and its types are in `internal-analysis.ts`.
  */
-// The bundled copies of svelte-ast's lexer and walker, so a package bundling
-// svelte-prune doesn't ship them twice.
+// The bundled copies of svelte-ast's lexer and walker, so a package
+// bundling svelte-prune doesn't ship them twice.
 export {
   type LexedImport,
   lexComponent,

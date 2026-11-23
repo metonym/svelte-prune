@@ -1,7 +1,8 @@
 /**
- * Rewrites a component's source for the values its call sites pass, using the
- * same evaluator as the CSS analysis so the two agree. Edits replace exact
- * node ranges of the original text; nothing is re-printed from the AST.
+ * Rewrites a component's source for the values its call sites pass, using
+ * the same evaluator as the CSS analysis so the two agree. Edits replace
+ * exact node ranges of the original text; nothing is re-printed from the
+ * AST.
  */
 import {
   type AST,
@@ -12,6 +13,7 @@ import {
   valueVisitorKeys,
   walk,
 } from "svelte-ast/walk";
+
 import { type Node, parse } from "./ast";
 import { componentMaps, selectedKeys } from "./component-maps";
 import { isTopLevel } from "./component-model";
@@ -27,8 +29,8 @@ import {
   concat,
   type MappedText,
   removeMatches,
-  type Splice,
   sliceOf,
+  type Splice,
   splice,
 } from "./mapped-text";
 import { FOREIGN_ELEMENT, namespacesChanged } from "./namespaces";
@@ -261,7 +263,10 @@ function isPure(node: Node, scope?: Scope): boolean {
   }
 }
 
-/** Instance-script `const d = createEventDispatcher()` names, imported from `svelte`. */
+/**
+ * Instance-script `const d = createEventDispatcher()` names, imported from
+ * `svelte`.
+ */
 function eventDispatchers(ast: AST.Root): Set<string> {
   const names = new Set<string>();
   const body = ast.instance?.content.body ?? [];
@@ -926,9 +931,9 @@ export function specializeComponent(
   if (ast.instance) visit(ast.instance, null, "instance");
   visit(ast.fragment, null, "fragment");
 
-  // Removed markup can leave a `<style>` selector unused. The mark goes right
-  // after the last markup: before `<style>`, Svelte 3/4 would render the
-  // whitespace between them.
+  // Removed markup can leave a `<style>` selector unused. The mark goes
+  // right after the last markup: before `<style>`, Svelte 3/4 would render
+  // the whitespace between them.
   const { css } = ast;
   const lastMarkup = ast.fragment.nodes
     .filter(
@@ -1046,8 +1051,9 @@ function bump(counts: Map<string, number>, name: string): void {
 }
 
 /**
- * Reads of each name, except `owned` nodes. `propReads` counts `owned` too,
- * but not `export { a }`, which keeps `a` declared without reading it.
+ * Reads of each name, except `owned` nodes. `propReads` counts `owned`
+ * too, but not `export { a }`, which keeps `a` declared without reading
+ * it.
  */
 function countReads(
   ast: Node,
@@ -1117,8 +1123,8 @@ const IGNORE_UNUSED_PROP =
   "// svelte-ignore unused-export-let export_let_unused\n  ";
 
 /**
- * Props nothing reads anymore that stay declared get `svelte-ignore`: one a
- * call site passes would land in `$$restProps`, and one outside the call
+ * Props nothing reads anymore that stay declared get `svelte-ignore`: one
+ * a call site passes would land in `$$restProps`, and one outside the call
  * sites may be passed or read (see `removablePropsOf`).
  */
 function unusedPropMarks(
@@ -1179,9 +1185,9 @@ type Candidate = {
 
 /**
  * Which unread props may go, by local name. Nothing outside the call sites
- * may pass or read them (open usage keeps all), and one a site passes stays
- * declared where the component reads `$$restProps` or `$$props`, or it would
- * land in them.
+ * may pass or read them (open usage keeps all), and one a site passes
+ * stays declared where the component reads `$$restProps` or `$$props`, or
+ * it would land in them.
  */
 function removablePropsOf(scope: Scope): PropRules {
   const { model, usage } = scope;
@@ -1197,8 +1203,9 @@ function removablePropsOf(scope: Scope): PropRules {
 }
 
 /**
- * `removable`: an unread prop may go. `local`: no call site passes or binds
- * the prop, so it's state the component holds, and `export let` can be `let`.
+ * `removable`: an unread prop may go. `local`: no call site passes or
+ * binds the prop, so it's state the component holds, and `export let` can
+ * be `let`.
  */
 type PropRules = {
   removable: (name: string) => boolean;
@@ -1210,7 +1217,10 @@ const NO_PROP_RULES: PropRules = {
   local: () => false,
 };
 
-/** `export let a = 1, b;` whose every name `local` accepts: the `export ` to drop. */
+/**
+ * `export let a = 1, b;` whose every name `local` accepts: the `export `
+ * to drop.
+ */
 function localPropExport(
   statement: Statement,
   local: (name: string) => boolean,
@@ -1347,10 +1357,11 @@ function subtractReads(
 }
 
 /**
- * With `drop`, removes unread top-level declarations with pure initializers
- * (Svelte compiles `$:` into effects a minifier must keep) and the unread
- * props `props` accepts, and declares the props no call site passes as
- * plain `let`s; with `silence`, marks the unread props left.
+ * With `drop`, removes unread top-level declarations with pure
+ * initializers (Svelte compiles `$:` into effects a minifier must keep)
+ * and the unread props `props` accepts, and declares the props no call
+ * site passes as plain `let`s; with `silence`, marks the unread props
+ * left.
  */
 function cleanUp(
   input: MappedText,

@@ -1,4 +1,5 @@
 import { walk } from "svelte-ast/walk";
+
 import type { Node } from "./ast";
 import type { ComponentModel } from "./component-model";
 import { evaluate, type Scope } from "./evaluate";

@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { type LibrarySpec, libraryPaths } from "./library-paths";
+
+import { libraryPaths, type LibrarySpec } from "./library-paths";
 import { optimizerRegistry } from "./loader";
 import {
   createComponentOptimizer,
@@ -117,19 +118,19 @@ function resolveWith(compiler: WebpackCompiler): ImportResolver | undefined {
     });
 }
 
-/** The built loader next to this file, or its source in a checkout. */
+// The built loader next to this file, or its source in a checkout; the
+// built name is a literal URL so the bundler builds the loader too.
 const LOADER = (() => {
-  const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.join(here, "loader.js"),
-    path.join(here, "loader.ts"),
+    fileURLToPath(new URL("./loader.js", import.meta.url)),
+    fileURLToPath(new URL("./loader.ts", import.meta.url)),
   ];
   return candidates.find((file) => existsSync(file)) ?? candidates[0];
 })();
 
 /**
- * `svelte-prune` for webpack and Rspack: rewrites each component of `library`
- * the app renders for the props it passes.
+ * `svelte-prune` for webpack and Rspack: rewrites each component of
+ * `library` the app renders for the props it passes.
  *
  * Runs on production builds only. It adds a loader before `svelte-loader`
  * on `.svelte` files (and on the library's script modules, for its
@@ -139,7 +140,10 @@ const LOADER = (() => {
 export class SveltePrunePlugin {
   private readonly spec: LibrarySpec;
   private readonly options: SveltePruneOptions | undefined;
-  /** `plugin` also names webpack's hooks; `loader` is the built loader's path. */
+  /**
+   * `plugin` also names webpack's hooks; `loader` is the built loader's
+   * path.
+   */
   private readonly names: PluginNames & { loader: string };
 
   public constructor(

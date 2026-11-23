@@ -11,10 +11,16 @@ import {
 export type CallSite = {
   /** Library module key, relative to its `srcDir`: `Button/Button.svelte`. */
   component: string;
-  /** Every prop and slot is unknown: props are spread, or it's used as a value. */
+  /**
+   * Every prop and slot is unknown: props are spread, or it's used as a
+   * value.
+   */
   open: boolean;
   props: Map<string, Value>;
-  /** Slots this site fills (a snippet fills its name's); `null` when that can't be told. */
+  /**
+   * Slots this site fills (a snippet fills its name's); `null` when that
+   * can't be told.
+   */
   slots: Set<string> | null;
   /** Has content outside any snippet or `slot="…"`: Svelte 5's `children`. */
   children?: boolean;
@@ -110,7 +116,10 @@ export function checkTarget(
   return site;
 }
 
-/** Content is `children` in Svelte 5, only a slot in 3/4; unknown version, either. */
+/**
+ * Content is `children` in Svelte 5, only a slot in 3/4; unknown version,
+ * either.
+ */
 function propsOf(
   site: CallSite,
   svelteMajor: number | undefined,

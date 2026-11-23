@@ -1,14 +1,25 @@
 # svelte-prune
 
-**Ship only the Svelte library code your app renders.**
+Ship only the Svelte library code your app renders.
 
-A component library's `Button` handles every `kind`, `size` and state any app might ask for, and your bundle carries all of it. svelte-prune reads how your app uses the library before the build, then hands Svelte a copy of each component rewritten for the props it actually receives: branches that can't run, the components only they render, and the CSS only they use are cut from the build.
+A component library's `Button` handles every `kind`,
+`size` and state any app might ask for,
+and your bundle carries all of it.
+svelte-prune reads how your app uses the library before the build,
+then hands Svelte a copy of each component rewritten for the props it
+actually receives: branches that can't run,
+the components only they render, and the CSS only they use are cut from
+the build.
 
-Zero dependencies. Production builds in Vite, Rollup, Rolldown, webpack and Rspack, for Svelte 3, 4 and 5 (runes included), with source maps back to the original components.
+Zero dependencies.
+Production builds in Vite, Rollup, Rolldown, webpack and Rspack,
+for Svelte 3, 4 and 5 (runes included),
+with source maps back to the original components.
 
 ## Results
 
-A realistic page per library, built with Vite with and without svelte-prune ([`examples/`](examples/README.md)), gzipped:
+A realistic page per library, built with Vite with
+and without svelte-prune, gzipped:
 
 | Library                       | Style                      | JS smaller by | CSS smaller by |
 | :---------------------------- | :------------------------- | :------------ | :------------- |
@@ -20,9 +31,18 @@ A realistic page per library, built with Vite with and without svelte-prune ([`e
 | bits-ui                       | headless, state in classes | 2.2%          | (no CSS)       |
 | @skeletonlabs/skeleton-svelte | headless, state machines   | 0%            | 0%             |
 
-CSS is Tailwind's output for the Tailwind libraries ([Tailwind](#tailwind)) and the library's own stylesheet for Carbon and sveltestrap ([Stylesheets](#stylesheets)). Libraries whose markup branches on their props gain the most, and so do those whose tailwind-variants tables hold every variant's classes. Headless libraries that keep their state in classes or hand their props to a state machine leave little to fold.
+CSS is Tailwind's output for the Tailwind libraries
+([Tailwind](#tailwind)) and the library's own stylesheet for Carbon
+and sveltestrap ([Stylesheets](#stylesheets)).
+Libraries whose markup branches on their props gain the most,
+and so do those whose tailwind-variants tables hold every variant's
+classes.
+Headless libraries that keep their state in classes
+or hand their props to a state machine leave little to fold.
 
-Every page renders and behaves identically in the browser, and 7,669 generated apps across these libraries render identically before and after ([Correctness](#correctness)).
+Every page renders and behaves identically in the browser,
+and 7,669 generated apps across these libraries render identically
+before and after ([Correctness](#correctness)).
 
 ## Install
 
@@ -32,9 +52,13 @@ bun i -d svelte-prune
 
 ## What it removes
 
-Each diff is the library component as svelte-prune rewrites it for the app in its first comment (Svelte 5 output; on Svelte 3 and 4 a live branch keeps its `{#if true}` wrapper).
+Each diff is the library component as svelte-prune rewrites it for the
+app in its first comment
+(Svelte 5 output; on Svelte 3 and 4 a live branch keeps its `{#if true}`
+wrapper).
 
-**Branches that can't render, and the components only they render.** `Icon` is no longer bundled:
+**Branches that can't render, and the components only they render.**
+`Icon` is no longer bundled:
 
 ```diff
  <!-- <Button kind="ghost">Save</Button> <Button kind="ghost" size="sm">Cancel</Button> -->
@@ -67,7 +91,8 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
 +<button class="btn btn-{"sm"}" disabled={false}><slot /></button>
 ```
 
-**Defaults no call site overrides**, and the markup that only renders for other values:
+**Defaults no call site overrides**,
+and the markup that only renders for other values:
 
 ```diff
  <!-- <Field label="Name" /> -->
@@ -86,7 +111,11 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
 +{#if false}<!---->{/if}
 ```
 
-**Events nobody listens to.** A forwarded `on:focus` and a `dispatch("change")` go; `on:click` has a listener and stays. `checked`, which no call site passes, becomes the component's own variable:
+**Events nobody listens to.**
+A forwarded `on:focus` and a `dispatch("change")` go;
+`on:click` has a listener and stays.
+`checked`, which no call site passes,
+becomes the component's own variable:
 
 ```diff
  <!-- <Toggle on:click={log}>Dark mode</Toggle> -->
@@ -113,7 +142,8 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
 +<a href={"/docs"}><slot /><Icon name={"arrow"} /></a>
 ```
 
-**Runes and snippets.** A snippet prop no call site passes is `undefined`:
+**Runes and snippets.**
+A snippet prop no call site passes is `undefined`:
 
 ```diff
  <!-- <Card title="Usage">Body</Card> -->
@@ -133,7 +163,9 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
  </div>
 ```
 
-**Through your own components.** A wrapper's props come from its call sites, so `<Confirm tone="danger">` reaches the `Button` inside it:
+**Through your own components.**
+A wrapper's props come from its call sites,
+so `<Confirm tone="danger">` reaches the `Button` inside it:
 
 ```diff
  <!-- src/Confirm.svelte, rendered only as <Confirm tone="danger">Delete</Confirm> -->
@@ -151,7 +183,10 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
 +<button class="danger"><slot /></button>
 ```
 
-**tailwind-variants keys no live call selects**, with `tailwind: true` in the [`LibrarySpec`](#libraryspec). Tailwind, scanning what svelte-prune writes, leaves those classes out of your CSS too ([Tailwind](#tailwind)):
+**tailwind-variants keys no live call selects**,
+with `tailwind: true` in the [`LibrarySpec`](#libraryspec).
+Tailwind, scanning what svelte-prune writes,
+leaves those classes out of your CSS too ([Tailwind](#tailwind)):
 
 ```diff
  // <Badge color="green">Active</Badge> <Badge color="red">Failed</Badge>
@@ -170,7 +205,8 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
  });
 ```
 
-**Library stylesheet rules nothing renders**, with `styles` in the `LibrarySpec` ([Stylesheets](#stylesheets)):
+**Library stylesheet rules nothing renders**,
+with `styles` in the `LibrarySpec` ([Stylesheets](#stylesheets)):
 
 ```diff
  /* <Button>Save</Button>, whose class is btn-{kind} */
@@ -181,7 +217,8 @@ Each diff is the library component as svelte-prune rewrites it for the app in it
 -.btn-danger:hover { background: darkred; }
 ```
 
-**Svelte's hydration code**, for an app that only mounts, with `hydration: false` ([Hydration](#hydration)).
+**Svelte's hydration code**, for an app that only mounts,
+with `hydration: false` ([Hydration](#hydration)).
 
 ## Usage
 
@@ -222,17 +259,31 @@ It adds a loader that runs before `svelte-loader` on `.svelte` files.
 
 ### Tailwind
 
-Tailwind generates a utility for every class string it scans, and a library's setup has it scan the package (`@source "../node_modules/my-library/dist"`). For a library with `tailwind: true` in its [`LibrarySpec`](#libraryspec), and with Tailwind installed, every build writes what of the library can render to `node_modules/.svelte-prune/<name>`: every file but the components that can't render, as svelte-prune rewrote them (components and tailwind-variants tables). Scan that instead, with Tailwind v4's `@source`:
+Tailwind generates a utility for every class string it scans,
+and a library's setup has it scan the package
+(`@source "../node_modules/my-library/dist"`).
+For a library with `tailwind: true` in its
+[`LibrarySpec`](#libraryspec), and with Tailwind installed,
+every build writes what of the library can render to
+`node_modules/.svelte-prune/<name>`:
+every file but the components that can't render,
+as svelte-prune rewrote them (components and tailwind-variants tables).
+Scan that instead, with Tailwind v4's `@source`:
 
 ```css
 @source "../node_modules/.svelte-prune/my-library";
 ```
 
-or a Tailwind v3 `content` glob: `"./node_modules/.svelte-prune/my-library/**/*.{svelte,js}"`. The dev server and development builds write the library as it is, so their CSS has every class.
+or a Tailwind v3 `content` glob:
+`"./node_modules/.svelte-prune/my-library/**/*.{svelte,js}"`.
+The dev server and development builds write the library as it is,
+so their CSS has every class.
 
 ### Stylesheets
 
-A library that ships its own CSS (Carbon's `css/white.css`, Bootstrap for sveltestrap) can name it in `styles`:
+A library that ships its own CSS
+(Carbon's `css/white.css`, Bootstrap for sveltestrap) can name it in
+`styles`:
 
 ```ts
 const library = {
@@ -241,9 +292,26 @@ const library = {
 };
 ```
 
-Every production build then removes, from the CSS it emits, the rules that need a class those stylesheets define and that nothing can render. A class stays when a live component can render it under the app's props (a template with a part it can't evaluate keeps every class it could build: `btn-{size}` keeps each `btn-` class), when one of the library's script modules names it, when a file in `content` names it, or when `styles.keep` or the `safelist` option names it. Classes the stylesheets don't define (the app's own, Svelte's scoping classes, other packages') never remove a rule. A selector inside `:not()` or `:has()` doesn't need its classes; an `:is()` list stays if any branch can match.
+Every production build then removes, from the CSS it emits,
+the rules that need a class those stylesheets define
+and that nothing can render.
+A class stays when a live component can render it under the app's props
+(a template with a part it can't evaluate keeps every class it could
+build: `btn-{size}` keeps each `btn-` class),
+when one of the library's script modules names it,
+when a file in `content` names it, or when `styles.keep`
+or the `safelist` option names it.
+Classes the stylesheets don't define
+(the app's own, Svelte's scoping classes, other packages') never remove
+a rule.
+A selector inside `:not()` or `:has()` doesn't need its classes;
+an `:is()` list stays if any branch can match.
 
-`classTokens` says how to read the library's class names. Without it, every run of word characters and hyphens is a class, which keeps more than a namespaced library needs: a `startsWith("x--")` in its code would keep every `x--` class. A library whose classes share a prefix should pass its own:
+`classTokens` says how to read the library's class names.
+Without it, every run of word characters and hyphens is a class,
+which keeps more than a namespaced library needs:
+a `startsWith("x--")` in its code would keep every `x--` class.
+A library whose classes share a prefix should pass its own:
 
 ```ts
 classTokens: {
@@ -255,17 +323,31 @@ classTokens: {
 },
 ```
 
-Once those rules are gone, the custom properties (`--x`) and `@keyframes` the stylesheets define go too when nothing reads them: no `var()` or animation left in the emitted CSS, and no file in `content` or source of the library naming them (a script may read one, or build its name, as in `` `--tone-${t}` ``, which keeps every `--tone-` property). Only a class those tokens can read is ever removed. Classes the app builds from data at runtime are the one thing it can't see: list them, or a RegExp for their selectors, in `safelist`.
+Once those rules are gone, the custom properties (`--x`)
+and `@keyframes` the stylesheets define go too when nothing reads them:
+no `var()` or animation left in the emitted CSS,
+and no file in `content` or source of the library naming them
+(a script may read one, or build its name, as in `` `--tone-${t}` ``,
+which keeps every `--tone-` property).
+Only a class those tokens can read is ever removed.
+Classes the app builds from data at runtime are the one thing it can't
+see: list them, or a RegExp for their selectors, in `safelist`.
 
 ### Hydration
 
-An app that renders in the browser only (`mount()`, no server-rendered HTML to pick up) can pass `hydration: false` to the Vite plugin:
+An app that renders in the browser only
+(`mount()`, no server-rendered HTML to pick up) can pass
+`hydration: false` to the Vite plugin:
 
 ```ts
 sveltePrune(library, { hydration: false });
 ```
 
-Svelte 5's client runtime guards its hydration code with a variable a bundler can't prove is always `false`, so every app ships it. With `hydration: false` it becomes a constant, and `hydrate()` throws before it runs, so the minifier drops both. On the [examples](examples/README.md), on top of svelte-prune, gzipped:
+Svelte 5's client runtime guards its hydration code with a variable a
+bundler can't prove is always `false`, so every app ships it.
+With `hydration: false` it becomes a constant,
+and `hydrate()` throws before it runs, so the minifier drops both.
+On the example pages, on top of svelte-prune, gzipped:
 
 | Library                       | JS smaller by |
 | :---------------------------- | :------------ |
@@ -277,11 +359,23 @@ Svelte 5's client runtime guards its hydration code with a variable a bundler ca
 | svelte-ux                     | 2.1%          |
 | carbon-components-svelte      | 1.8%          |
 
-Each page behaves identically in Chromium both ways. A build whose output can still reach `hydrate()` fails: SvelteKit with SSR, `hydrate` imported from `svelte`, or a class component from `svelte/legacy` (`new App({ hydrate: true })`). Svelte 3 and 4 bundle hydration code only for components compiled with `hydratable`, so they ignore it, with a warning. So does the webpack plugin: webpack bundles Svelte's custom element class, and through it `hydrate()`, whatever the app calls, so no build could show the app never hydrates.
+Each page behaves identically in Chromium both ways.
+A build whose output can still reach `hydrate()` fails:
+SvelteKit with SSR, `hydrate` imported from `svelte`,
+or a class component from `svelte/legacy`
+(`new App({ hydrate: true })`).
+Svelte 3 and 4 bundle hydration code only for components compiled with
+`hydratable`, so they ignore it, with a warning.
+So does the webpack plugin: webpack bundles Svelte's custom element
+class, and through it `hydrate()`, whatever the app calls,
+so no build could show the app never hydrates.
 
 ## API reference
 
-svelte-prune has no CLI: it runs inside your bundler (`svelte-prune/vite`, `svelte-prune/webpack`), or from your own script with `specializeFiles` (`svelte-prune`). Each entry ships its own types:
+svelte-prune has no CLI: it runs inside your bundler
+(`svelte-prune/vite`, `svelte-prune/webpack`),
+or from your own script with `specializeFiles` (`svelte-prune`).
+Each entry ships its own types:
 
 ```ts
 import {
@@ -306,11 +400,22 @@ function sveltePrune(
 ): Plugin;
 ```
 
-A Vite, Rollup and Rolldown plugin. Put it before the Svelte plugin.
+A Vite, Rollup and Rolldown plugin.
+Put it before the Svelte plugin.
 
-- Rewrites on `vite build` only (`--watch` included), never on the dev server, which runs only to write the library as it is for [Tailwind](#tailwind) (`tailwind: true`). Rollup and Rolldown have no dev server: add it only to production configs there.
-- `buildStart` reads `content`, resolving aliased `.svelte` imports (`$lib/Card.svelte`) with the bundler. A watch rebuild where nothing in `content` changed reuses the last analysis.
-- `load` serves the rewritten components, with source maps; `transform` and `buildEnd` check the module graph and fail the build when a module the analysis didn't read imports the library (see [Errors](#warnings-and-errors)).
+- Rewrites on `vite build` only (`--watch` included),
+  never on the dev server, which runs only to write the library as it is
+  for [Tailwind](#tailwind) (`tailwind: true`).
+  Rollup and Rolldown have no dev server:
+  add it only to production configs there.
+- `buildStart` reads `content`, resolving aliased `.svelte` imports
+  (`$lib/Card.svelte`) with the bundler.
+  A watch rebuild where nothing in `content` changed reuses the last
+  analysis.
+- `load` serves the rewritten components, with source maps;
+  `transform` and `buildEnd` check the module graph and fail the build
+  when a module the analysis didn't read imports the library
+  (see [Errors](#warnings-and-errors)).
 
 ### `new SveltePrunePlugin(library, options?, names?)`
 
@@ -327,11 +432,19 @@ class SveltePrunePlugin {
 }
 ```
 
-A webpack 5 and Rspack plugin. It rewrites nothing unless `mode` is `"production"` (an unset `mode` counts); other modes only write the library as it is for [Tailwind](#tailwind) (`tailwind: true`). It adds a pre-loader on `.svelte` files and the library's script modules, so `svelte-loader` compiles the rewritten source wherever the plugin sits in `plugins`, analyzes `content` on `beforeRun` and `watchRun`, and checks the module graph on `finishModules`.
+A webpack 5 and Rspack plugin.
+It rewrites nothing unless `mode` is `"production"`
+(an unset `mode` counts); other modes only write the library as it is
+for [Tailwind](#tailwind) (`tailwind: true`).
+It adds a pre-loader on `.svelte` files and the library's script
+modules, so `svelte-loader` compiles the rewritten source wherever the
+plugin sits in `plugins`, analyzes `content` on `beforeRun`
+and `watchRun`, and checks the module graph on `finishModules`.
 
 ### `LibrarySpec`
 
-Describes the library to rewrite. Every field but `classTokens`, `styles` and `tailwind` is required.
+Describes the library to rewrite.
+Every field but `classTokens`, `styles` and `tailwind` is required.
 
 | Field               | Type                       |                                                                                                                                                                                                                                                                                                                                                                                          |
 | :------------------ | :------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -359,7 +472,9 @@ Describes the library to rewrite. Every field but `classTokens`, `styles` and `t
 
 ### `names`
 
-For a package that wraps svelte-prune and reports under its own name. `sveltePrune()` replaces its defaults whole, so pass `plugin`, `failure` and `id`; `SveltePrunePlugin` takes any of its fields.
+For a package that wraps svelte-prune and reports under its own name.
+`sveltePrune()` replaces its defaults whole, so pass `plugin`,
+`failure` and `id`; `SveltePrunePlugin` takes any of its fields.
 
 | Field              | Default                               |                                                                                                                          |
 | :----------------- | :------------------------------------ | :----------------------------------------------------------------------------------------------------------------------- |
@@ -385,7 +500,10 @@ function specializeFiles(input: {
 }): Promise<SpecializedComponents | { warning: string }>;
 ```
 
-The analysis and rewrite the plugins run, for a set of files and without a bundler. Pass every file that renders the library: a component a missing file renders is rewritten without its call sites.
+The analysis and rewrite the plugins run,
+for a set of files and without a bundler.
+Pass every file that renders the library:
+a component a missing file renders is rewritten without its call sites.
 
 | Input                |                                                                                                                                                                |
 | :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -400,7 +518,9 @@ The analysis and rewrite the plugins run, for a set of files and without a bundl
 | `resolvedImports`    | Non-relative `.svelte` imports you resolved yourself (`$lib/Card.svelte`), keyed `` `${importer}\0${specifier}` ``, to the absolute path of a file in `files`. |
 | `safelist`           | As in `SveltePruneOptions`.                                                                                                                                    |
 
-It never throws: if the analysis fails, it resolves to `{ warning }` and nothing is rewritten. Otherwise to `SpecializedComponents`:
+It never throws: if the analysis fails,
+it resolves to `{ warning }` and nothing is rewritten.
+Otherwise to `SpecializedComponents`:
 
 | Field         | Type                                               |                                                                                                                                                                                                                                |
 | :------------ | :------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -435,21 +555,41 @@ else
 
 Every message starts with `` `${tool}:` ``.
 
-- **Warning** (the build continues, nothing rewritten): `could not analyze this build (…)`, when the analysis throws, for example because the library isn't installed.
-- **Warnings** for `hydration: false` (the build continues with Svelte's hydration code): `ignored \`hydration: false\``, on Svelte 3 and 4 and under webpack and Rspack; `left Svelte's hydration code in this build`, when the installed Svelte's runtime isn't one it can rewrite.
-- **Errors** (the build fails), when components were rewritten without a call site:
+- **Warning** (the build continues, nothing rewritten):
+  `could not analyze this build (…)`, when the analysis throws,
+  for example because the library isn't installed.
+- **Warnings** for `hydration: false`
+  (the build continues with Svelte's hydration code):
+  `ignored \`hydration: false\``, on Svelte 3 and 4 and under webpack
+  and Rspack; `left Svelte's hydration code in this build`,
+  when the installed Svelte's runtime isn't one it can rewrite.
+- **Errors** (the build fails), when components were rewritten without a
+  call site:
   - a file outside `content` imports the library: add it to `content`;
-  - an analyzed file imports the library through an alias the analysis can't read (`import { Button } from "@lib"`): import it from the package name;
-  - a virtual module (no file on disk) imports the library: import it from a file in `content`;
-  - a module outside `content` renders an app component whose props were read from its call sites: add it to `content`;
-  - a module outside the library imports one of its script modules whose tailwind-variants tables were rewritten (through an alias, for example): import them from the package name.
-- **Error** with `hydration: false`, when the output can still call `hydrate()` (SvelteKit with SSR, `hydrate` from `svelte`, a class component from `svelte/legacy`): mount the app with `mount()`, or remove the option.
+  - an analyzed file imports the library through an alias the analysis
+    can't read (`import { Button } from "@lib"`):
+    import it from the package name;
+  - a virtual module (no file on disk) imports the library:
+    import it from a file in `content`;
+  - a module outside `content` renders an app component whose props were
+    read from its call sites: add it to `content`;
+  - a module outside the library imports one of its script modules whose
+    tailwind-variants tables were rewritten
+    (through an alias, for example): import them from the package name.
+- **Error** with `hydration: false`, when the output can still call
+  `hydrate()`
+  (SvelteKit with SSR, `hydrate` from `svelte`, a class component from
+  `svelte/legacy`): mount the app with `mount()`, or remove the option.
 
 ## What it reads
 
-Each diff is rewritten for the call site in its first comment; the values come from what that call site passes.
+Each diff is rewritten for the call site in its first comment;
+the values come from what that call site passes.
 
-**Names declared in markup.** A `{@const}`, an `{#each}` item, and destructuring in either are read where they're in scope, and so is a snippet's parameter, as what every `{@render}` of it passes:
+**Names declared in markup.**
+A `{@const}`, an `{#each}` item, and destructuring in either are read
+where they're in scope, and so is a snippet's parameter,
+as what every `{@render}` of it passes:
 
 ```diff
  <!-- <List size="md" {items} /> -->
@@ -465,9 +605,15 @@ Each diff is rewritten for the call site in its first comment; the values come f
  {/each}
 ```
 
-A snippet handed to a component, or used as a component's content, keeps its parameters unknown: the component may call it with anything.
+A snippet handed to a component, or used as a component's content,
+keeps its parameters unknown: the component may call it with anything.
 
-**Pure built-ins.** `Array.isArray`, `Math`'s rounding and min/max functions, and `includes`, `some` and `every` on arrays (`some` and `every` with a callback written inline that only reads) are evaluated, and a `&&`, `||` or `??` whose left side decides it folds without its right side:
+**Pure built-ins.**
+`Array.isArray`, `Math`'s rounding and min/max functions,
+and `includes`, `some` and `every` on arrays
+(`some` and `every` with a callback written inline that only reads) are
+evaluated, and a `&&`, `||` or `??`
+whose left side decides it folds without its right side:
 
 ```diff
  <!-- <Header title="Hi" placement="left" /> -->
@@ -479,9 +625,13 @@ A snippet handed to a component, or used as a component's content, keeps its par
 +{#if false}<!---->{/if}
 ```
 
-`Array` or `Math` declared in the component isn't the built-in, and an object's own `includes` may do anything.
+`Array` or `Math` declared in the component isn't the built-in,
+and an object's own `includes` may do anything.
 
-**Stores handed down in a context.** A `writable` a component sets only from its props, in `$:`, and hands down only in `setContext`, holds what those props can be in every component that reads it:
+**Stores handed down in a context.**
+A `writable` a component sets only from its props, in `$:`,
+and hands down only in `setContext`,
+holds what those props can be in every component that reads it:
 
 ```svelte
 <!-- Tabs.svelte -->
@@ -502,9 +652,14 @@ A snippet handed to a component, or used as a component's content, keeps its par
 +<span>{label}</span>
 ```
 
-`Tooltip` is no longer bundled. A store a reader may write, or that a provider above may receive, keeps every value.
+`Tooltip` is no longer bundled.
+A store a reader may write, or that a provider above may receive,
+keeps every value.
 
-**Only what the app uses.** A component your app imports but never names again (not in markup, scripts, comments or strings) adds no call site, so it's specialized only for where the library itself renders it:
+**Only what the app uses.**
+A component your app imports but never names again
+(not in markup, scripts, comments or strings) adds no call site,
+so it's specialized only for where the library itself renders it:
 
 ```svelte
 <script>
@@ -513,32 +668,82 @@ A snippet handed to a component, or used as a component's content, keeps its par
 <TextField label="Name" />
 ```
 
-`TextField` renders `<Field placement="inset">`, so `Field` keeps only its `inset` branch.
+`TextField` renders `<Field placement="inset">`,
+so `Field` keeps only its `inset` branch.
 
 ## How it stays safe
 
-**Unknown means open.** A component keeps every value of a prop the analysis can't read, and is rendered with any props wherever it can't see the call site:
+**Unknown means open.**
+A component keeps every value of a prop the analysis can't read,
+and is rendered with any props wherever it can't see the call site:
 
-- A prop passed as an expression it can't evaluate, spread from an object it can't read, or bound with `bind:` keeps every value.
-- A component used as a value (`this={Button}`, passed as a prop), imported dynamically or through an alias, or rendered from a file outside `content` keeps every variant. The plugins check the bundler's module graph after the build and fail it when a module the analysis didn't read imports the library.
-- A component whose props something other than a call site can set keeps every value: a custom element, or one bound with `bind:this` whose instance the app uses for more than calling what it exports (`$set`, an accessor, `$on`, handing it on).
-- A prop nothing reads anymore stays declared where removing it would show: its default has effects (`uniqueId()`), something writes it, or a call site passes it to a component that reads `$$restProps` or `$$props`, where it would land.
-- A prop becomes a plain `let` only when no call site passes or binds it.
-- A bare `on:click` stays wherever a call site may listen to it: one with `on:click`, one whose own forwarded `on:click` has a listener, or one the analysis can't read. So does a `dispatch("click", …)`, and one goes only where its result is unused (`true` in the browser, `undefined` on the server), keeping whatever its arguments run.
-- `$$restProps` is spread away only when no call site passes a key it would hold, and only onto components and into objects: on an element, a spread decides how Svelte renders its attributes.
-- Content counts: snippets are props, and content outside them is `children` on Svelte 5 and a slot on Svelte 3 and 4.
-- An export of the library it can't tell apart from a component (a function that may return one) keeps every component.
-- A tailwind-variants table keeps every key when something other than a live component's call can read it: the app imports it, another table extends it, a script module reads it, a namespace or `import()` reaches it, or a component hands on what a call with slots returns. A variant whose value at some call the analysis can't evaluate (a spread, a function's parameter) keeps every key. A table nothing calls is emptied only when nothing else can read it, and a script module that mounts a component keeps every table whole.
+- A prop passed as an expression it can't evaluate,
+  spread from an object it can't read, or bound with `bind:`
+  keeps every value.
+- A component used as a value (`this={Button}`, passed as a prop),
+  imported dynamically or through an alias,
+  or rendered from a file outside `content` keeps every variant.
+  The plugins check the bundler's module graph after the build
+  and fail it when a module the analysis didn't read imports the
+  library.
+- A component whose props something other than a call site can set keeps
+  every value: a custom element, or one bound with `bind:this` whose
+  instance the app uses for more than calling what it exports
+  (`$set`, an accessor, `$on`, handing it on).
+- A prop nothing reads anymore stays declared where removing it would
+  show: its default has effects (`uniqueId()`), something writes it,
+  or a call site passes it to a component that reads `$$restProps`
+  or `$$props`, where it would land.
+- A prop becomes a plain `let` only when no call site passes
+  or binds it.
+- A bare `on:click` stays wherever a call site may listen to it:
+  one with `on:click`, one whose own forwarded `on:click` has a
+  listener, or one the analysis can't read.
+  So does a `dispatch("click", …)`, and one goes only
+  where its result is unused
+  (`true` in the browser, `undefined` on the server),
+  keeping whatever its arguments run.
+- `$$restProps` is spread away only when no call site passes a key it
+  would hold, and only onto components and into objects: on an element,
+  a spread decides how Svelte renders its attributes.
+- Content counts: snippets are props,
+  and content outside them is `children` on Svelte 5
+  and a slot on Svelte 3 and 4.
+- An export of the library it can't tell apart from a component
+  (a function that may return one) keeps every component.
+- A tailwind-variants table keeps every key when something other than a
+  live component's call can read it: the app imports it,
+  another table extends it, a script module reads it,
+  a namespace or `import()` reaches it,
+  or a component hands on what a call with slots returns.
+  A variant whose value at some call the analysis can't evaluate
+  (a spread, a function's parameter) keeps every key.
+  A table nothing calls is emptied only when nothing else can read it,
+  and a script module that mounts a component keeps every table whole.
 
-- A stylesheet rule stays unless it needs a class the library's stylesheets define, its `classTokens` can read, and nothing can render: no live component under the app's props, no script module of the library, no file in `content`, nothing in `keep` or `safelist`. The examples check that no selector whose classes all appear on the rendered page goes missing.
+- A stylesheet rule stays unless it needs a class the library's
+  stylesheets define, its `classTokens` can read,
+  and nothing can render: no live component under the app's props,
+  no script module of the library, no file in `content`,
+  nothing in `keep` or `safelist`.
+  The examples check that no selector whose classes all appear on the
+  rendered page goes missing.
 
-- With `hydration: false`, Svelte's runtime is rewritten only when both of its modules are exactly as expected, and the build fails if `hydrate()` survives bundling: an output that can reach it is one that may hydrate.
+- With `hydration: false`, Svelte's runtime is rewritten only
+  when both of its modules are exactly as expected,
+  and the build fails if `hydrate()` survives bundling:
+  an output that can reach it is one that may hydrate.
 
-The app's own components are rewritten too, when every file that renders them is in `content`: a wrapper's props come from its call sites, so `<Card tone="danger">` reaches the `Button` inside it.
+The app's own components are rewritten too,
+when every file that renders them is in `content`:
+a wrapper's props come from its call sites,
+so `<Card tone="danger">` reaches the `Button` inside it.
 
 ## Correctness
 
-On real libraries, each component with every prop value it compares against plus random mixes of them, SSR-rendered with the original and the rewritten library:
+On real libraries, each component with every prop value it compares
+against plus random mixes of them, SSR-rendered with the original
+and the rewritten library:
 
 | Library                       | Components | Apps rendering identically | Apps rendering differently |
 | :---------------------------- | :--------- | :------------------------- | :------------------------- |
@@ -550,12 +755,25 @@ On real libraries, each component with every prop value it compares against plus
 | bits-ui                       | 159        | 859                        | 0                          |
 | @skeletonlabs/skeleton-svelte | 131        | 327                        | 0                          |
 
-The [`examples/`](examples/README.md) behind [Results](#results) also compare each page's rendered HTML and its behavior in a browser, and fail when a selector whose classes all appear on the page goes missing from the CSS.
+The example pages behind [Results](#results) also compare each page's
+rendered HTML and its behavior in a browser,
+and fail when a selector whose classes all appear on the page goes
+missing from the CSS.
 
 ## Limitations
 
-- **Production builds only.** The analysis runs for the whole app before the build, so dev serving and HMR are left alone.
-- **tailwind-variants tables only in the library's `.js` modules**, made with `tv` imported from `tailwind-variants`. Tables defined in components, or with `createTV`, keep every class.
-- **Every importer must be in `content`.** A module outside it that imports the library fails the build rather than ship components rewritten without its call sites.
-- **Stylesheets can't see classes built from data.** A class the app or a package outside the library adds at runtime, from a value no file names, must be in `safelist`.
-- **Values it can't evaluate stay open.** Props read from a whole `$props()` object, or state held in classes (`.svelte.js`), keep every value.
+- **Production builds only.**
+  The analysis runs for the whole app before the build,
+  so dev serving and HMR are left alone.
+- **tailwind-variants tables only in the library's `.js` modules**,
+  made with `tv` imported from `tailwind-variants`.
+  Tables defined in components, or with `createTV`, keep every class.
+- **Every importer must be in `content`.**
+  A module outside it that imports the library fails the build rather
+  than ship components rewritten without its call sites.
+- **Stylesheets can't see classes built from data.**
+  A class the app or a package outside the library adds at runtime,
+  from a value no file names, must be in `safelist`.
+- **Values it can't evaluate stay open.**
+  Props read from a whole `$props()` object,
+  or state held in classes (`.svelte.js`), keep every value.

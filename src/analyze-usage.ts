@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 import {
   lexComponent,
   lexDynamicImports,
   lexImportsExports,
 } from "svelte-ast/lexer";
 import { extractIdentifiers } from "svelte-ast/walk";
+
 import { forEachNode, type Node, parseModule } from "./ast";
 import type { ModuleUsage } from "./call-sites";
 import {
@@ -29,8 +31,8 @@ import { listJsAndSvelteFiles, packageSignature } from "./package";
 import {
   addCallSite,
   type CallSite,
-  type ComponentUsage,
   checkTarget,
+  type ComponentUsage,
   newComponentUsage,
 } from "./usage";
 import {
@@ -48,7 +50,10 @@ import {
 export type UsageOptions = {
   /** Components that keep every variant, as if rendered with any props. */
   exclude?: string[];
-  /** Values for props the analysis can't read, by component then prop; spreads still keep everything. */
+  /**
+   * Values for props the analysis can't read, by component then prop;
+   * spreads still keep everything.
+   */
   assume?: Record<
     string,
     Record<string, Array<string | number | boolean | null>>
@@ -59,9 +64,15 @@ export type UsageAnalysis = {
   /** Library module keys that can render. */
   liveComponents: Set<string>;
   usages: Map<string, ComponentUsage>;
-  /** `.x--btn--danger` when no button is danger, and every class of a component that can't render. */
+  /**
+   * `.x--btn--danger` when no button is danger, and every class of a
+   * component that can't render.
+   */
   isPruned(cls: string): boolean;
-  /** Whether library module `key` (`utils/x.js`) can load: something that renders imports it. */
+  /**
+   * Whether library module `key` (`utils/x.js`) can load: something that
+   * renders imports it.
+   */
   loadable(key: string): boolean;
   /** The scope `key` was last walked in; `undefined` if it can't render. */
   scopeFor(key: string): Scope | undefined;
@@ -72,7 +83,10 @@ type LibrarySources = {
   scriptTokens: Set<string>;
   /** The same, per script module. */
   scriptTokensOf: Map<string, Set<string>>;
-  /** Which modules import which, read on first use: only pruning styles needs it. */
+  /**
+   * Which modules import which, read on first use: only pruning styles needs
+   * it.
+   */
   graph: () => LibraryModules;
   componentContexts: Set<string>;
   scriptContexts: Set<string>;
@@ -190,7 +204,10 @@ export async function scanLibrarySources(
 }
 
 type LibraryModules = {
-  /** Each module's static imports and re-exports of the library's own modules. */
+  /**
+   * Each module's static imports and re-exports of the library's own
+   * modules.
+   */
   imports: Map<string, Set<string>>;
   /**
    * Modules whose imports can't all be followed (`import(x)`, the barrel,
@@ -385,13 +402,19 @@ function loadableModules(
   return seen;
 }
 
-/** Per key: `undefined` (no provider above) or a provider's object, with stores no reader can set. */
+/**
+ * Per key: `undefined` (no provider above) or a provider's object, with
+ * stores no reader can set.
+ */
 type ContextValues = Map<string, Value>;
 
 /** Rounds after which context values stop flowing, so the fixpoint ends. */
 const MAX_CONTEXT_ROUNDS = 16;
 
-/** A `MirroredStore` property flows only when read-only or no rendered component leaks it. */
+/**
+ * A `MirroredStore` property flows only when read-only or no rendered
+ * component leaks it.
+ */
 function contextValues(
   modelOf: (key: string) => ComponentModel,
   usages: Map<string, ComponentUsage>,
