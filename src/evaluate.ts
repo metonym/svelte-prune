@@ -54,7 +54,7 @@ import {
 /** What `getContext(key)` can return: `undefined` if nothing provides it. */
 export type ContextResolver = (key: string) => Value;
 
-export type Scope = {
+export type EvalScope = {
   readonly model: ComponentModel;
   readonly usage: ComponentUsage;
   readonly context: ContextResolver;
@@ -78,7 +78,7 @@ export function createScope(
     imported?: ReadonlyMap<string, Value>;
     svelteMajor?: number;
   } = {},
-): Scope {
+): EvalScope {
   return {
     model,
     usage,
@@ -91,7 +91,10 @@ export function createScope(
   };
 }
 
-function nestedBinding(node: Identifier, scope: Scope): Binding | undefined {
+function nestedBinding(
+  node: Identifier,
+  scope: EvalScope,
+): Binding | undefined {
   const binding = scope.model.scopes.bindingOf(node);
   return binding && !isTopLevel(binding, scope.model) ? binding : undefined;
 }
@@ -101,7 +104,7 @@ function passedAs(name: string, model: ComponentModel): string {
   return model.propNames.get(name) ?? name;
 }
 
-function evaluateIdentifier(node: Identifier, scope: Scope): Value {
+function evaluateIdentifier(node: Identifier, scope: EvalScope): Value {
   const nested = nestedBinding(node, scope);
   if (!nested) return lookup(node.name, scope);
   // `$item` reads a store a nested binding holds: unknown.
@@ -110,7 +113,7 @@ function evaluateIdentifier(node: Identifier, scope: Scope): Value {
 }
 
 /** Where a nested name's value comes from: what `pattern` destructures. */
-type NestedSource = { pattern: Node; value: (scope: Scope) => Value };
+type NestedSource = { pattern: Node; value: (scope: EvalScope) => Value };
 
 /**
  * A `{@const}`'s initializer, an `{#each}` item, or a snippet parameter's
@@ -213,7 +216,7 @@ function snippetCalls(
  * it's declared, with the names around that also read where they're
  * declared. Not memoized, since the walk's bindings can differ.
  */
-function nestedValue(binding: Binding, scope: Scope): Value {
+function nestedValue(binding: Binding, scope: EvalScope): Value {
   const source = nestedSource(binding, scope.model);
   // Names can't start with `#`, so this can't collide with one.
   const key = `#nested:${binding.node?.start}`;
@@ -235,7 +238,7 @@ function nestedValue(binding: Binding, scope: Scope): Value {
   }
 }
 
-function lookup(name: string, scope: Scope): Value {
+function lookup(name: string, scope: EvalScope): Value {
   if (name === "undefined") return UNDEFINED;
   const { model } = scope;
   if (model.unknownNames.has(name)) return UNKNOWN;
@@ -259,7 +262,11 @@ function lookup(name: string, scope: Scope): Value {
 }
 
 /** Unknown if a live guarded write assigns something unknown or an object. */
-function withGuardedWrites(value: Value, name: string, scope: Scope): Value {
+function withGuardedWrites(
+  value: Value,
+  name: string,
+  scope: EvalScope,
+): Value {
   const writes = scope.model.guardedWrites.get(name);
   if (!writes || value === UNKNOWN) return value;
   for (const write of liveWrites(writes, scope)) {
@@ -272,7 +279,7 @@ function withGuardedWrites(value: Value, name: string, scope: Scope): Value {
 
 function liveWrites(
   writes: readonly GuardedWrite[],
-  scope: Scope,
+  scope: EvalScope,
 ): GuardedWrite[] {
   return writes.filter(({ guards }) =>
     guards.every(({ test, holds }) => {
@@ -348,7 +355,7 @@ function ownValues(p: Primitive): Value {
  */
 export function bindEach(
   node: Extract<Node, { type: "EachBlock" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): () => void {
   const items = itemsOf(evaluate(node.expression, scope));
   const outer = scope.locals;
@@ -369,7 +376,7 @@ function bindPattern(
   pattern: Node | null,
   value: Value,
   locals: Map<Binding, Value>,
-  scope: Scope,
+  scope: EvalScope,
 ): void {
   switch (pattern?.type) {
     case "Identifier": {
@@ -423,14 +430,18 @@ function bindPattern(
 }
 
 /** `value`, with `fallback` where it may be `undefined` (a default). */
-function withDefault(value: Value, fallback: Expression, scope: Scope): Value {
+function withDefault(
+  value: Value,
+  fallback: Expression,
+  scope: EvalScope,
+): Value {
   if (value === UNKNOWN || !value.has(undefined)) return value;
   const defined = new Set(value);
   defined.delete(undefined);
   return join(defined, evaluate(fallback, scope));
 }
 
-function resolve(name: string, scope: Scope): Value {
+function resolve(name: string, scope: EvalScope): Value {
   const { model, usage } = scope;
 
   if (model.props.has(name)) {
@@ -469,7 +480,7 @@ function resolve(name: string, scope: Scope): Value {
   return UNKNOWN;
 }
 
-export function isPropsObject(node: Identifier, scope: Scope): boolean {
+export function isPropsObject(node: Identifier, scope: EvalScope): boolean {
   const { name } = node;
   return (
     (name === "$$props" ||
@@ -483,7 +494,7 @@ export type PassedProp = { value: Value; maybeAbsent: boolean; why?: string };
 
 /** `undefined` when usage is open; rest objects hold only undeclared keys. */
 function passedProps(
-  scope: Scope,
+  scope: EvalScope,
   name: string,
 ): Map<string, PassedProp> | undefined {
   const { model, usage } = scope;
@@ -513,7 +524,7 @@ function passedProps(
 
 export function spreadProps(
   argument: Expression,
-  scope: Scope,
+  scope: EvalScope,
 ): Map<string, PassedProp> | undefined {
   if (argument.type === "Identifier" && isPropsObject(argument, scope)) {
     return passedProps(scope, argument.name);
@@ -553,7 +564,7 @@ const MAX_WHY_DEPTH = 8;
 const PATH_SEPARATOR = /[\\/]/;
 const MAX_SNIPPET = 40;
 
-function snippet(node: Node | Expression, scope: Scope): string {
+function snippet(node: Node | Expression, scope: EvalScope): string {
   const { start, end } = node as unknown as { start: number; end: number };
   const text = scope.model.code.slice(start, end).replace(/\s+/g, " ");
   return text.length > MAX_SNIPPET
@@ -564,7 +575,7 @@ function snippet(node: Node | Expression, scope: Scope): string {
 /** For the report: the first part of `node` the analysis can't read. */
 function whyUnknown(
   node: Node | Expression,
-  scope: Scope,
+  scope: EvalScope,
   depth = 0,
 ): string | undefined {
   if (depth > MAX_WHY_DEPTH || evaluate(node, scope) !== UNKNOWN) {
@@ -632,7 +643,7 @@ function whyUnknown(
  */
 export function whyUnknownLater(
   node: Node | Expression,
-  scope: Scope,
+  scope: EvalScope,
 ): () => string | undefined {
   const locals = scope.locals;
   return () => {
@@ -657,7 +668,7 @@ const NESTED_REASONS: Partial<Record<Binding["kind"], string>> = {
   "await-error": "is what an `{#await}` rejects with",
 };
 
-function whyNameUnknown(name: string, scope: Scope, depth: number): string {
+function whyNameUnknown(name: string, scope: EvalScope, depth: number): string {
   const { model, usage } = scope;
   const component = model.key.split(PATH_SEPARATOR).pop() ?? model.key;
   const reason = model.unknownReasons.get(name);
@@ -695,7 +706,7 @@ function booleanOf(value: Value, negate: boolean): Value {
     : possible((truth === "truthy") !== negate);
 }
 
-export function evaluate(node: Node | Expression, scope: Scope): Value {
+export function evaluate(node: Node | Expression, scope: EvalScope): Value {
   const value = skipTypeWrappers(node);
   if (value !== node) return evaluate(value, scope);
   switch (node.type) {
@@ -805,7 +816,7 @@ export function evaluate(node: Node | Expression, scope: Scope): Value {
 
 function evaluateCall(
   node: Extract<Node, { type: "CallExpression" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): Value {
   const { callee, arguments: args } = node;
   const builtin = builtinCall(node, scope);
@@ -876,7 +887,7 @@ const isArrayValue = (p: Primitive): boolean =>
  */
 export function builtinCall(
   node: Extract<Node, { type: "CallExpression" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): Builtin | undefined {
   const { callee } = node;
   if (
@@ -923,7 +934,7 @@ export function builtinCall(
 function evaluateBuiltin(
   node: Extract<Node, { type: "CallExpression" }>,
   builtin: Builtin,
-  scope: Scope,
+  scope: EvalScope,
 ): Value {
   const args = node.arguments as Expression[];
   switch (builtin.kind) {
@@ -995,7 +1006,7 @@ function elementsOf(p: Primitive): readonly Value[] {
 
 /** Evaluates `run` with `param` bound to `value`. */
 function withLocals<T>(
-  scope: Scope,
+  scope: EvalScope,
   param: Node | undefined,
   value: Value,
   run: () => T,
@@ -1067,7 +1078,10 @@ function sameValueZero(a: Primitive, b: Primitive): boolean {
  * A readable body: a prop default no site overrides, `const f = (…) => …`,
  * or `function`.
  */
-function knownFunction(name: string, scope: Scope): FunctionNode | undefined {
+function knownFunction(
+  name: string,
+  scope: EvalScope,
+): FunctionNode | undefined {
   const { model, usage } = scope;
   let node: Node | null | undefined;
   if (model.props.has(name)) {
@@ -1104,8 +1118,8 @@ let callDepth = 0;
 function callValue(
   fn: FunctionNode,
   args: readonly Node[],
-  caller: Scope,
-  callee: Scope,
+  caller: EvalScope,
+  callee: EvalScope,
 ): Value {
   if (args.some((arg) => arg.type === "SpreadElement")) return UNKNOWN;
   const key = `call:${callee.model.key}:${fn.start}`;
@@ -1122,7 +1136,7 @@ function callValue(
 function runCall(
   fn: FunctionNode,
   values: readonly Value[],
-  callee: Scope,
+  callee: EvalScope,
   key: string,
 ): Value {
   const outer = callee.locals;
@@ -1200,7 +1214,7 @@ function loneReturn(
 
 function returned(
   statement: Extract<Node, { type: "ReturnStatement" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): Value {
   return statement.argument ? evaluate(statement.argument, scope) : UNDEFINED;
 }
@@ -1213,7 +1227,7 @@ function bindParameter(
   pattern: Node,
   value: Value,
   locals: Map<Binding, Value>,
-  scope: Scope,
+  scope: EvalScope,
 ): boolean {
   switch (pattern.type) {
     case "Identifier": {
@@ -1257,7 +1271,7 @@ function bindParameter(
 
 function evaluateMember(
   node: Extract<Node, { type: "MemberExpression" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): Value {
   const { object, property, computed, optional } = node;
   if (object.type === "Identifier") {
@@ -1324,7 +1338,7 @@ function propertyKeys(value: Value): string[] | undefined {
 
 function objectShape(
   node: Extract<Node, { type: "ObjectExpression" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): Value {
   if (node.properties.length > MAX_SHAPE_SIZE) return possible(OBJECT);
   const props = new Map<string, Value>();

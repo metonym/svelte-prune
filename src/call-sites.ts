@@ -19,8 +19,8 @@ import {
 import {
   bindEach,
   createScope,
+  type EvalScope,
   evaluate,
-  type Scope,
   spreadProps,
   whyUnknownLater,
 } from "./evaluate";
@@ -505,7 +505,7 @@ function appEvaluator(
   library: Library,
   options: SvelteUsageOptions,
 ): SiteReader & { bindEach: (node: AST.EachBlock) => () => void } {
-  let scope: Scope | undefined;
+  let scope: EvalScope | undefined;
   try {
     const model =
       options.model ?? buildComponentModel(code, file, undefined, ast);
@@ -542,7 +542,7 @@ export function appScope(
   usage: ComponentUsage,
   constants: ModuleConstants | undefined,
   library: Library,
-): Scope {
+): EvalScope {
   return createScope(model, usage, () => UNKNOWN, {
     imported: importedConstants(model, file, constants),
     svelteMajor: library.svelteMajor,

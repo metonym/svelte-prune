@@ -20,9 +20,9 @@ import { isTopLevel } from "./component-model";
 import {
   bindEach,
   builtinCall,
+  type EvalScope,
   evaluate,
   isPropsObject,
-  type Scope,
   spreadProps,
 } from "./evaluate";
 import {
@@ -148,7 +148,7 @@ function literalText(value: Value): string | null {
 
 function shortCircuits(
   node: Extract<Node, { type: "LogicalExpression" }>,
-  scope: Scope,
+  scope: EvalScope,
 ): boolean {
   const left = evaluate(node.left, scope);
   const truth = truthOf(left);
@@ -163,7 +163,7 @@ function shortCircuits(
  * Whether removing `node` is safe. Calls and member reads may run code
  * (getters), except, given `scope`, the few the evaluator models.
  */
-function isPure(node: Node, scope?: Scope): boolean {
+function isPure(node: Node, scope?: EvalScope): boolean {
   switch (node.type) {
     case "Literal":
     case "Identifier":
@@ -395,7 +395,7 @@ export type SpecializeOptions = {
 };
 
 export function specializeComponent(
-  scope: Scope,
+  scope: EvalScope,
   options?: SpecializeOptions,
 ): Specialization {
   const { code, ast } = scope.model;
@@ -1189,7 +1189,7 @@ type Candidate = {
  * stays declared where the component reads `$$restProps` or `$$props`, or
  * it would land in them.
  */
-function removablePropsOf(scope: Scope): PropRules {
+function removablePropsOf(scope: EvalScope): PropRules {
   const { model, usage } = scope;
   if (usage.open || model.customElement) return NO_PROP_RULES;
   const passed = (name: string) =>

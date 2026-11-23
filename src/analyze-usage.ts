@@ -21,8 +21,8 @@ import {
 import {
   type ContextResolver,
   createScope,
+  type EvalScope,
   evaluate,
-  type Scope,
 } from "./evaluate";
 import type { Library } from "./library";
 import { classTokensOf, isPrefixToken } from "./library-paths";
@@ -75,7 +75,7 @@ export type UsageAnalysis = {
    */
   loadable(key: string): boolean;
   /** The scope `key` was last walked in; `undefined` if it can't render. */
-  scopeFor(key: string): Scope | undefined;
+  scopeFor(key: string): EvalScope | undefined;
 };
 
 type LibrarySources = {
@@ -479,7 +479,7 @@ function contextValues(
   return values;
 }
 
-function storeValue(mirrored: MirroredStore, scope: Scope): Value {
+function storeValue(mirrored: MirroredStore, scope: EvalScope): Value {
   let value = mirrored.initial ? evaluate(mirrored.initial, scope) : UNDEFINED;
   for (const write of mirrored.writes) {
     value = join(value, evaluate(write, scope));

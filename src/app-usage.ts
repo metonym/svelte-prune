@@ -14,7 +14,7 @@ import {
   buildModuleModel,
   type ComponentModel,
 } from "./component-model";
-import { createScope, evaluate, type Scope } from "./evaluate";
+import { createScope, type EvalScope, evaluate } from "./evaluate";
 import type { Library } from "./library";
 import {
   addCallSite,
@@ -114,7 +114,7 @@ export type AppUsage = {
    */
   closed: Set<string>;
   /** With merged usage; `undefined` unless closed and modeled. */
-  scopeFor(file: string): Scope | undefined;
+  scopeFor(file: string): EvalScope | undefined;
 };
 
 /**

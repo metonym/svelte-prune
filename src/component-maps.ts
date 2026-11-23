@@ -2,7 +2,7 @@ import { walk } from "svelte-ast/walk";
 
 import type { Node } from "./ast";
 import type { ComponentModel } from "./component-model";
-import { evaluate, type Scope } from "./evaluate";
+import { type EvalScope, evaluate } from "./evaluate";
 import { UNKNOWN } from "./values";
 
 type ObjectNode = Extract<Node, { type: "ObjectExpression" }>;
@@ -39,7 +39,7 @@ export function componentMaps(
 /** Keys `map`'s reads can take in `scope`, or `null` for any. */
 export function selectedKeys(
   map: ComponentMap,
-  scope: Scope,
+  scope: EvalScope,
 ): Set<string> | null {
   const keys = new Set<string>();
   for (const read of map.reads) {

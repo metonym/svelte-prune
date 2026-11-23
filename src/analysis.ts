@@ -12,7 +12,7 @@ import {
 } from "./analyze-usage";
 import { type AppUsage, collectAppUsage } from "./app-usage";
 import { type ModuleUsage, readLibraryImport } from "./call-sites";
-import type { Scope } from "./evaluate";
+import type { EvalScope } from "./evaluate";
 import { type Library, loadLibrary } from "./library";
 import {
   type LibraryImport,
@@ -415,7 +415,11 @@ export async function specializeFiles(input: {
   const rewrites: ComponentRewrite[] = [];
   const appRewrites: Array<{ file: string; edits: number }> = [];
   let tables: RewrittenTables;
-  const serve = (file: string, scope: Scope, specialized: Specialization) => {
+  const serve = (
+    file: string,
+    scope: EvalScope,
+    specialized: Specialization,
+  ) => {
     edits += specialized.edits;
     sources.set(file, {
       code: specialized.code,

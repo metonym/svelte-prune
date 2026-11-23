@@ -24,7 +24,7 @@ import {
   componentDynamicImports,
   scriptDynamicImports,
 } from "./dynamic-imports";
-import { evaluate, type Scope } from "./evaluate";
+import { type EvalScope, evaluate } from "./evaluate";
 import { createExportResolver } from "./exports";
 import type { Library } from "./library";
 import { walkLive } from "./live-walk";
@@ -934,7 +934,7 @@ const NO_TABLES: RewrittenTables = {
 export async function specializeTables(
   library: Library,
   appModules: readonly ModuleUsage[],
-  scopeFor: (key: string) => Scope | undefined,
+  scopeFor: (key: string) => EvalScope | undefined,
 ): Promise<RewrittenTables> {
   const scan = await scanLibrary(library);
   if (scan.tables.size === 0 || scan.open) return NO_TABLES;

@@ -6,9 +6,9 @@ import { componentMaps, selectedKeys } from "./component-maps";
 import { UnsupportedComponentError } from "./component-model";
 import {
   bindEach,
+  type EvalScope,
   evaluate,
   type PassedProp,
-  type Scope,
   spreadProps,
   whyUnknownLater,
 } from "./evaluate";
@@ -80,7 +80,7 @@ function addTokens(text: string, result: Walk): void {
  * an always-empty array, falsy `class:`. Function bodies count as live.
  */
 export function walkLive(
-  scope: Scope,
+  scope: EvalScope,
   library: LibraryPaths,
   calls?: WatchedCalls,
 ): LiveResult {
@@ -100,11 +100,11 @@ export function walkLive(
   return result;
 }
 
-function visitAll(nodes: Iterable<Node>, scope: Scope, result: Walk) {
+function visitAll(nodes: Iterable<Node>, scope: EvalScope, result: Walk) {
   for (const node of nodes) visit(node, scope, result);
 }
 
-function visit(node: Node, scope: Scope, result: Walk): void {
+function visit(node: Node, scope: EvalScope, result: Walk): void {
   switch (node.type) {
     // Import bindings aren't uses.
     case "ImportDeclaration":
@@ -294,7 +294,7 @@ function openSite(component: string): CallSite {
 function elementSite(
   node: AST.Component | AST.SvelteSelf,
   component: string,
-  scope: Scope,
+  scope: EvalScope,
 ): CallSite {
   return callSiteFromElement(node, component, {
     value: (expression) => evaluate(expression, scope),
@@ -313,7 +313,7 @@ function elementSite(
  */
 function componentKey(
   name: string,
-  scope: Scope,
+  scope: EvalScope,
   library: LibraryPaths,
 ): string | undefined {
   const { model } = scope;
@@ -337,7 +337,7 @@ function componentKey(
 }
 
 /** `Button.svelte:12`, for the report. */
-function whereIn(node: { start: number }, scope: Scope): string {
+function whereIn(node: { start: number }, scope: EvalScope): string {
   return `${scope.model.key.split("/").pop()}:${locate(scope.model.code, node.start).line}`;
 }
 
@@ -356,7 +356,7 @@ export type SiteReader = {
   forwards: (event: string) => boolean;
 };
 
-function explainAt(node: { start: number }, scope: Scope): Explain {
+function explainAt(node: { start: number }, scope: EvalScope): Explain {
   return (expression) => {
     const why = whyUnknownLater(expression, scope);
     return () => {
