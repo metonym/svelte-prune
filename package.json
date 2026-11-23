@@ -37,5 +37,9 @@
   "engines": {
     "node": ">=22"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "devDependencies": {
+    "caligula": "0.4.0",
+    "svelte-ast": "0.12.1"
+  }
 }
