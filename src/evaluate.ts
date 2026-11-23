@@ -721,12 +721,12 @@ export function evaluate(node: Node | Expression, scope: EvalScope): Value {
       return evaluateIdentifier(node, scope);
 
     case "TemplateLiteral": {
-      let result = possible(node.quasis[0].value.cooked ?? "");
+      let result = possible(node.quasis[0]?.value.cooked ?? "");
       for (const [i, expression] of node.expressions.entries()) {
         result = binary(
           "+",
           binary("+", result, stringify(evaluate(expression, scope))),
-          possible(node.quasis[i + 1].value.cooked ?? ""),
+          possible(node.quasis[i + 1]?.value.cooked ?? ""),
         );
       }
       return result;
@@ -1207,7 +1207,7 @@ function loneReturn(
   if (node.type === "ReturnStatement") return node;
   if (node.type === "BlockStatement" && node.body.length === 1) {
     const [only] = node.body;
-    if (only.type === "ReturnStatement") return only;
+    if (only?.type === "ReturnStatement") return only;
   }
   return undefined;
 }

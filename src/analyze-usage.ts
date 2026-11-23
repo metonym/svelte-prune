@@ -163,7 +163,7 @@ export async function scanLibrarySources(
     return graph;
   };
   for (const [i, file] of files.entries()) {
-    const code = codes[i];
+    const code = codes[i] ?? "";
     const isScript = file.endsWith(".js");
     if (isScript) {
       const own = new Set<string>();

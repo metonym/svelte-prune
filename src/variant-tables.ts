@@ -325,7 +325,7 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
         init.type !== "CallExpression" ||
         init.callee.type !== "Identifier" ||
         !tvs.has(init.callee.name) ||
-        init.arguments.length === 0 ||
+        !init.arguments[0] ||
         init.arguments[0].type === "SpreadElement"
       ) {
         continue;

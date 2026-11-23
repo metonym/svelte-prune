@@ -44,8 +44,9 @@ export function collectLibraryImports(
     );
   }
   for (const match of source.matchAll(patterns.dynamicImport)) {
-    if (match[2].includes("${")) all = true;
-    else add(match[2], () => ["*"]);
+    const specifier = match[2] ?? "";
+    if (specifier.includes("${")) all = true;
+    else add(specifier, () => ["*"]);
   }
   return all;
 }

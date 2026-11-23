@@ -443,7 +443,7 @@ export function collectImportedUsage(
   for (const match of code.matchAll(library.patterns.barrelImport)) {
     understood.add(match.index + match[0].length - library.name.length - 2);
     if (match[1]) continue; // `import type { … }`
-    for (const specifier of match[2].split(",")) {
+    for (const specifier of (match[2] ?? "").split(",")) {
       const name = specifier.trim();
       if (name === "" || name.startsWith("type ")) continue;
       const exported = library.exportOf(name.split(IMPORT_AS)[0]);
@@ -616,7 +616,7 @@ function staticValue(
         : possible(expression.value as string | number | boolean | null);
     case "TemplateLiteral":
       return expression.expressions.length === 0
-        ? possible(expression.quasis[0].value.cooked ?? "")
+        ? possible(expression.quasis[0]?.value.cooked ?? "")
         : UNKNOWN;
     case "Identifier":
       if (expression.name === "undefined") return UNDEFINED;

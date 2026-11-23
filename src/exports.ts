@@ -304,7 +304,7 @@ export function createExportResolver(src: string): ExportResolver {
             callee.property.type === "Identifier" &&
             callee.property.name === "assign" &&
             args.length === 2 &&
-            args[1].type === "ObjectExpression"
+            args[1]?.type === "ObjectExpression"
           ) {
             const root = holdingOf(args[0]);
             if (root.kind === "unknown" || root.kind === "members") {

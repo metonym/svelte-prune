@@ -348,7 +348,7 @@ function stringExport(
     "gm",
   );
   const matches = [...code.matchAll(declaration)];
-  return matches.length === 1 ? matches[0][2] : undefined;
+  return matches.length === 1 ? matches[0]?.[2] : undefined;
 }
 
 /**
@@ -690,7 +690,7 @@ function heldStore(
     value.callee.type === "Identifier" &&
     model.storeImports.get(value.callee.name) === "readonly" &&
     value.arguments.length === 1 &&
-    value.arguments[0].type === "Identifier"
+    value.arguments[0]?.type === "Identifier"
     ? { id: value.arguments[0], wrapped: true }
     : undefined;
 }
@@ -790,6 +790,7 @@ function mirroredStore(
         call?.type !== "CallExpression" ||
         call.callee !== parent ||
         call.arguments.length !== 1 ||
+        !value ||
         value.type === "SpreadElement" ||
         !reactive.has(call)
       ) {
@@ -1251,6 +1252,7 @@ function declaredByPattern(stack: readonly Node[]): boolean {
   let child = stack[stack.length - 1];
   for (let i = stack.length - 2; i >= 0; i--) {
     const up = stack[i];
+    if (!up) return false;
     switch (up.type) {
       case "VariableDeclarator":
         return up.id === child && child !== stack[stack.length - 1];
@@ -1345,7 +1347,7 @@ export function inertCallback(node: Node): node is FunctionNode {
 export function callbackBody(fn: FunctionNode): Node | undefined {
   if (fn.body.type !== "BlockStatement") return fn.body;
   const [only] = fn.body.body;
-  return fn.body.body.length === 1 && only.type === "ReturnStatement"
+  return fn.body.body.length === 1 && only?.type === "ReturnStatement"
     ? (only.argument ?? undefined)
     : undefined;
 }

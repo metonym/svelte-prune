@@ -225,7 +225,7 @@ export class LibraryPaths {
 
   /** `…/pkg/src/Button/Button.svelte` -> `Button/Button.svelte`. */
   moduleKey(id: string): string | undefined {
-    return this.patterns.srcSegment.exec(id)?.[1].replace(BACKSLASH, "/");
+    return this.patterns.srcSegment.exec(id)?.[1]?.replace(BACKSLASH, "/");
   }
 
   /**

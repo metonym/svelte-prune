@@ -800,9 +800,9 @@ export function specializeComponent(
     fragment: AST.Fragment | null | undefined,
   ): MappedText {
     const nodes = fragment?.nodes ?? [];
-    return nodes.length > 0
-      ? rewrite(nodes[0].start, nodes[nodes.length - 1].end)
-      : concat();
+    const first = nodes[0];
+    const last = nodes.at(-1);
+    return first && last ? rewrite(first.start, last.end) : concat();
   }
 
   /** Prints `block` as only ever rendering one fragment (or `emptyBlock`). */

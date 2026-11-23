@@ -217,9 +217,11 @@ export function namespacesChanged(
     let high = texts.length - 1;
     while (low <= high) {
       const mid = (low + high) >> 1;
-      if (offset < texts[mid].start) high = mid - 1;
-      else if (offset >= texts[mid].end) low = mid + 1;
-      else return texts[mid];
+      const text = texts[mid];
+      if (!text) return undefined;
+      if (offset < text.start) high = mid - 1;
+      else if (offset >= text.end) low = mid + 1;
+      else return text;
     }
     return undefined;
   };
