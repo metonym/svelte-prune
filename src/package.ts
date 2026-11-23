@@ -83,10 +83,12 @@ export function installedMajor(
 
 function readVersion(root: string): unknown {
   try {
-    const manifest: { version?: unknown } = JSON.parse(
+    const manifest: unknown = JSON.parse(
       readFileSync(path.join(root, "package.json"), "utf8"),
     );
-    return manifest.version;
+    return typeof manifest === "object" && manifest !== null
+      ? Reflect.get(manifest, "version")
+      : undefined;
   } catch {
     return undefined;
   }

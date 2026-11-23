@@ -375,7 +375,7 @@ function attributeValue(
   const { value } = attribute;
   if (value === true) return possible(true);
   if (!Array.isArray(value)) return evaluateExpression(value.expression);
-  if (value.length === 1 && value[0].type === "ExpressionTag") {
+  if (value.length === 1 && value[0]?.type === "ExpressionTag") {
     // `prop="{x}"`: the value itself, or its string form.
     const inner = evaluateExpression(value[0].expression);
     return join(inner, stringify(inner));
@@ -435,7 +435,8 @@ function readContent(fragment: AST.Fragment): {
       continue;
     }
     const text = Array.isArray(slot.value) ? slot.value : null;
-    if (text?.length === 1 && text[0].type === "Text") slots?.add(text[0].data);
+    if (text?.length === 1 && text[0]?.type === "Text")
+      slots?.add(text[0].data);
     else slots = null;
   }
   return { slots, snippets, children };

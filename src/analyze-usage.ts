@@ -625,7 +625,7 @@ function runPass(
               svelteMajor,
               scriptContextReads,
             )
-          : new Map(),
+          : new Map<string, Value>(),
     };
     for (const key of usages.keys()) {
       const model = modelOf(key);
