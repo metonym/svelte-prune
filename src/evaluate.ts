@@ -570,7 +570,8 @@ const PATH_SEPARATOR = /[\\/]/;
 const MAX_SNIPPET = 40;
 
 function snippet(node: Node | Expression, scope: EvalScope): string {
-  const { start, end } = node as unknown as { start: number; end: number };
+  const start = "start" in node ? node.start : 0;
+  const end = "end" in node ? node.end : start;
   const text = scope.model.code.slice(start, end).replace(/\s+/g, " ");
   return text.length > MAX_SNIPPET
     ? `${text.slice(0, MAX_SNIPPET - 1)}…`
@@ -718,9 +719,9 @@ export function evaluate(node: Node | Expression, scope: EvalScope): Value {
     case "Literal":
       return "regex" in node && node.regex
         ? possible(OBJECT)
-        : typeof node.value === "bigint"
+        : typeof node.value === "bigint" || node.value instanceof RegExp
           ? UNKNOWN
-          : possible(node.value as string | number | boolean | null);
+          : possible(node.value);
 
     case "Identifier":
       return evaluateIdentifier(node, scope);

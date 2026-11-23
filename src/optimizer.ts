@@ -193,34 +193,52 @@ export const DEFAULT_NAMES: PluginNames = {
   },
 };
 
-function newBuild(root: string) {
+// Named, since the plugin replaces the whole state when the root changes.
+interface Build {
+  root: string;
+  sources: SpecializedComponents["sources"];
+  analyzed: Set<string>;
+  /** Files that render the library but weren't analyzed. */
+  missed: Set<string>;
+  /** Modules with no file that render the library. */
+  virtual: Set<string>;
+  /** Real paths of app components whose props came from analyzed call sites. */
+  closed: Set<string>;
+  /** Closed components rendered from somewhere else, and by what. */
+  escaped: Map<string, string[]>;
+  /**
+   * Analyzed files, by name, and the imports of the library in them it
+   * didn't read.
+   */
+  unread: Map<string, Set<string>>;
+  /**
+   * Rewritten script modules, by name, and what imports them from outside
+   * the library.
+   */
+  scriptImporters: Map<string, Set<string>>;
+  readImport: SpecializedComponents["readImport"];
+  realpaths: Map<string, string | undefined>;
+  pruneStyles: SpecializedComponents["pruneStyles"];
+  shared: SharedAnalysis | undefined;
+  /** Whether `pruneRuntime` warned this build. */
+  runtimeWarned: boolean;
+}
+
+function newBuild(root: string): Build {
   return {
     root,
-    sources: new Map() as SpecializedComponents["sources"],
-    analyzed: new Set<string>(),
-    /** Files that render the library but weren't analyzed. */
-    missed: new Set<string>(),
-    /** Modules with no file that render the library. */
-    virtual: new Set<string>(),
-    /** Real paths of app components whose props came from analyzed call sites. */
-    closed: new Set<string>(),
-    /** Closed components rendered from somewhere else, and by what. */
-    escaped: new Map<string, string[]>(),
-    /**
-     * Analyzed files, by name, and the imports of the library in them it
-     * didn't read.
-     */
-    unread: new Map<string, Set<string>>(),
-    /**
-     * Rewritten script modules, by name, and what imports them from outside
-     * the library.
-     */
-    scriptImporters: new Map<string, Set<string>>(),
-    readImport: (() => true) as SpecializedComponents["readImport"],
-    realpaths: new Map<string, string | undefined>(),
-    pruneStyles: undefined as SpecializedComponents["pruneStyles"],
-    shared: undefined as SharedAnalysis | undefined,
-    /** Whether `pruneRuntime` warned this build. */
+    sources: new Map(),
+    analyzed: new Set(),
+    missed: new Set(),
+    virtual: new Set(),
+    closed: new Set(),
+    escaped: new Map(),
+    unread: new Map(),
+    scriptImporters: new Map(),
+    readImport: () => true,
+    realpaths: new Map(),
+    pruneStyles: undefined,
+    shared: undefined,
     runtimeWarned: false,
   };
 }

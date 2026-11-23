@@ -615,9 +615,10 @@ function staticValue(
   switch (expression.type) {
     case "Literal":
       if ("regex" in expression && expression.regex) return possible(OBJECT);
-      return typeof expression.value === "bigint"
+      return typeof expression.value === "bigint" ||
+        expression.value instanceof RegExp
         ? UNKNOWN
-        : possible(expression.value as string | number | boolean | null);
+        : possible(expression.value);
     case "TemplateLiteral":
       return expression.expressions.length === 0
         ? possible(expression.quasis[0]?.value.cooked ?? "")

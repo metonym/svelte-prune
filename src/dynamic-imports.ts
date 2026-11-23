@@ -90,7 +90,8 @@ export function textDynamicImports(
     match = TEXT_IMPORT.exec(code)
   ) {
     const start = match.index;
-    const kind = match[1] as "import" | "require" | undefined;
+    const kind =
+      match[1] === "import" || match[1] === "require" ? match[1] : undefined;
     if (!kind) {
       calls.push({
         kind: "glob",

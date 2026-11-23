@@ -300,7 +300,7 @@ function readModuleImports(
 function runsOnLoad(code: string): boolean {
   let body: Node[];
   try {
-    body = parseModule(code, { comments: false }).body as Node[];
+    body = parseModule(code, { comments: false }).body;
   } catch {
     return true;
   }

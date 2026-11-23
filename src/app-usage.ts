@@ -1,5 +1,3 @@
-import type { Expression } from "svelte-ast/walk";
-
 import {
   appScope,
   collectSourceUsage,
@@ -66,7 +64,7 @@ function readConstants(
   const values = new Map<string, Value>();
   for (const [exported, local] of exportedNames(model)) {
     const value = evaluate(
-      { type: "Identifier", name: local } as Expression,
+      { type: "Identifier", name: local, start: 0, end: 0 },
       scope,
     );
     if (value === UNKNOWN || [...value].some(isObject)) continue;
