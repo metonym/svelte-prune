@@ -1,6 +1,6 @@
 {
   "name": "svelte-prune",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Ship only the Svelte library code your app renders.",
   "license": "MIT",
   "author": "Eric Liu (https://github.com/metonym)",
