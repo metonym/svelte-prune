@@ -155,6 +155,7 @@ export class SveltePrunePlugin {
       plugin: names.plugin ?? DEFAULT_NAMES.plugin,
       failure: names.failure ?? DEFAULT_NAMES.failure,
       loader: names.loader ?? LOADER,
+      onSummary: names.onSummary,
     };
   }
 
@@ -228,13 +229,15 @@ export class SveltePrunePlugin {
       this.options?.hydration === false
         ? `${name} ignored \`hydration: false\`, which needs Vite, Rollup or Rolldown: webpack and Rspack bundle Svelte's hydrate() whether or not the app calls it.`
         : undefined;
+    const log = (line: string) =>
+      compiler.getInfrastructureLogger(name).info(line);
     const prepare = async () => {
       const result = await optimizer.prepare(
         compiler.context,
         resolveWith(compiler),
       );
       warning = result.warning;
-      if (result.info) compiler.getInfrastructureLogger(name).info(result.info);
+      if (result.summary) optimizer.announce(result.summary, log);
       for (const line of result.report ?? []) console.log(line);
     };
     compiler.hooks.beforeRun.tapPromise(name, prepare);
@@ -311,7 +314,7 @@ export class SveltePrunePlugin {
           }
           if (css.size === 0) return;
           const original = new Map(css);
-          const info = optimizer.pruneStyles(css);
+          const summary = optimizer.pruneStyles(css);
           for (const [asset, pruned] of css) {
             if (pruned === original.get(asset)) continue;
             compilation.updateAsset(
@@ -319,7 +322,7 @@ export class SveltePrunePlugin {
               new compiler.webpack.sources.RawSource(pruned),
             );
           }
-          if (info) compiler.getInfrastructureLogger(name).info(info);
+          if (summary) optimizer.announce(summary, log);
         },
       );
     });

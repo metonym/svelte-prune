@@ -26,6 +26,9 @@ export {
   createComponentOptimizer,
   type ImportResolver,
   type PluginNames,
+  type RewriteSummary,
+  type StylesSummary,
+  type Summary,
   type SveltePruneOptions,
 } from "./optimizer";
 export {

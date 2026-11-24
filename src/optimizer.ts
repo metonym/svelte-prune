@@ -180,10 +180,53 @@ async function resolveAliases(
   return resolved;
 }
 
+/** What a build rewrote: `prepare`'s counts. */
+export interface RewriteSummary {
+  kind: "rewrite";
+  /** The library's components rewritten. */
+  components: number;
+  /** The app's own components rewritten. */
+  app: number;
+  /** tailwind-variants tables pruned or emptied. */
+  tables: number;
+  edits: number;
+}
+
+/** What a build's CSS lost: `pruneStyles`' counts. */
+export interface StylesSummary {
+  kind: "styles";
+  rules: number;
+  /** Custom properties removed. */
+  declarations: number;
+  /** Bytes of CSS before and after. */
+  before: number;
+  after: number;
+}
+
+export type Summary = RewriteSummary | StylesSummary;
+
 export type PluginNames = {
   plugin: string;
   failure: Failure;
+  /**
+   * Takes each summary in place of the line the plugin logs, for a
+   * wrapper that reports them itself. Called with `silent` too.
+   */
+  onSummary?: ((summary: Summary) => void) | undefined;
 };
+
+function describe(summary: Summary, label: string): string | undefined {
+  if (summary.kind === "rewrite") {
+    const { components, app, tables, edits } = summary;
+    return `rewrote ${components} ${label} components${app > 0 ? ` and ${app} of the app's own` : ""}${tables > 0 ? ` and ${tables} tailwind-variants tables` : ""} for this app (${edits} edits)`;
+  }
+  const { rules, declarations, before, after } = summary;
+  if (rules + declarations === 0) return undefined;
+  const kB = (bytes: number) => `${(bytes / 1000).toFixed(2)} kB`;
+  const properties =
+    declarations > 0 ? ` and ${declarations} custom properties` : "";
+  return `removed ${rules} unused ${label} CSS rules${properties} (${kB(before)} -> ${kB(after)})`;
+}
 
 export const DEFAULT_NAMES: PluginNames = {
   plugin: "svelte-prune",
@@ -290,7 +333,7 @@ export function createComponentOptimizer(
       resolve?: ImportResolver,
     ): Promise<{
       warning?: string | undefined;
-      info?: string | undefined;
+      summary?: RewriteSummary | undefined;
       report?: string[] | undefined;
     }> {
       build = newBuild(root);
@@ -386,9 +429,13 @@ export function createComponentOptimizer(
       build.closed = new Set([...result.closed].map(real));
       return {
         warning: ignored,
-        info: options?.silent
-          ? undefined
-          : `rewrote ${result.sources.size - result.apps - result.tables.modules} ${label} components${result.apps > 0 ? ` and ${result.apps} of the app's own` : ""}${result.tables.modules > 0 ? ` and ${result.tables.pruned + result.tables.emptied} tailwind-variants tables` : ""} for this app (${result.edits} edits)`,
+        summary: {
+          kind: "rewrite",
+          components: result.sources.size - result.apps - result.tables.modules,
+          app: result.apps,
+          tables: result.tables.pruned + result.tables.emptied,
+          edits: result.edits,
+        },
         report: options?.report ? result.report() : undefined,
       };
     },
@@ -403,10 +450,25 @@ export function createComponentOptimizer(
     },
 
     /**
+     * Gives `summary` to the wrapper's `onSummary`, or else logs it with
+     * `log` as a sentence, unless `silent`; a summary of nothing isn't
+     * logged.
+     */
+    announce(summary: Summary, log: (line: string) => void): void {
+      if (names.onSummary) {
+        names.onSummary(summary);
+        return;
+      }
+      if (options?.silent) return;
+      const line = describe(summary, label);
+      if (line !== undefined) log(line);
+    },
+
+    /**
      * Prunes the CSS assets `assets` holds (name to source) in place, and
      * says what it removed; `undefined` when there's nothing to prune with.
      */
-    pruneStyles(assets: Map<string, string>): string | undefined {
+    pruneStyles(assets: Map<string, string>): StylesSummary | undefined {
       const prune = build.pruneStyles;
       if (!prune) return undefined;
       let rules = 0;
@@ -421,11 +483,7 @@ export function createComponentOptimizer(
         after += pruned.css.length;
         assets.set(name, pruned.css);
       }
-      if (rules + declarations === 0 || options?.silent) return undefined;
-      const kB = (bytes: number) => `${(bytes / 1000).toFixed(2)} kB`;
-      const properties =
-        declarations > 0 ? ` and ${declarations} custom properties` : "";
-      return `removed ${rules} unused ${label} CSS rules${properties} (${kB(before)} -> ${kB(after)})`;
+      return { kind: "styles", rules, declarations, before, after };
     },
 
     /**

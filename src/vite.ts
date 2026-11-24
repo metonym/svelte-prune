@@ -64,13 +64,13 @@ export function sveltePrune(
         if (warning) this.warn(warning);
         return;
       }
-      const { warning, info, report } = await optimizer.prepare(
+      const { warning, summary, report } = await optimizer.prepare(
         root,
         async (source, importer) =>
           (await this.resolve(source, importer, { skipSelf: true }))?.id,
       );
       if (warning) this.warn(warning);
-      if (info) this.info?.(info);
+      if (summary) optimizer.announce(summary, (line) => this.info?.(line));
       for (const line of report ?? []) console.log(line);
     },
     load(id) {
@@ -135,12 +135,12 @@ export function sveltePrune(
         const hydrating = optimizer.checkHydration(chunks);
         if (hydrating) this.error(hydrating);
         if (assets.size === 0) return;
-        const info = optimizer.pruneStyles(assets);
+        const summary = optimizer.pruneStyles(assets);
         for (const [fileName, css] of assets) {
           const file = bundle[fileName];
           if (file?.type === "asset") file.source = css;
         }
-        if (info) this.info?.(info);
+        if (summary) optimizer.announce(summary, (line) => this.info?.(line));
       },
     },
   };
