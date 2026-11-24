@@ -1,6 +1,6 @@
 /**
- * The usage analysis and the rewrites it drives. The plugins load it
- * lazily.
+ * The usage analysis and the rewrites it drives. The plugins load
+ * it lazily.
  */
 import { readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
@@ -115,8 +115,8 @@ export function createUsageCollector(
     /**
      * `bundledIds` are the library's `.svelte` module paths in the bundle;
      * `imports`, the module graph's edges into the library. A component
-     * imported in a way the analysis didn't read (an alias) keeps every
-     * variant.
+     * imported in a way the analysis didn't read (an alias) keeps
+     * every variant.
      */
     async analyze(
       bundledIds: Iterable<string>,
@@ -386,8 +386,8 @@ export async function specializeFiles(input: {
   resolvedImports?: ReadonlyMap<string, string> | undefined;
   failure: Failure;
   /**
-   * Classes `pruneStyles` keeps whatever renders: ones the app builds from
-   * data.
+   * Classes `pruneStyles` keeps whatever renders: ones the app builds
+   * from data.
    */
   safelist?: readonly SafelistEntry[] | undefined;
 }): Promise<SpecializedComponents | { warning: string }> {

@@ -1,6 +1,6 @@
 /**
- * Reads a package's barrel with the lexer alone, so callers never load the
- * parser.
+ * Reads a package's barrel with the lexer alone, so callers never load
+ * the parser.
  */
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";

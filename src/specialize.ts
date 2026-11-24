@@ -1,8 +1,8 @@
 /**
  * Rewrites a component's source for the values its call sites pass, using
  * the same evaluator as the CSS analysis so the two agree. Edits replace
- * exact node ranges of the original text; nothing is re-printed from the
- * AST.
+ * exact node ranges of the original text; nothing is re-printed from
+ * the AST.
  */
 import {
   type AST,
@@ -264,8 +264,8 @@ function isPure(node: Node, scope?: EvalScope): boolean {
 }
 
 /**
- * Instance-script `const d = createEventDispatcher()` names, imported from
- * `svelte`.
+ * Instance-script `const d = createEventDispatcher()` names, imported
+ * from `svelte`.
  */
 function eventDispatchers(ast: AST.Root): Set<string> {
   const names = new Set<string>();
@@ -460,8 +460,8 @@ export function specializeComponent(
   /**
    * `dispatch(type, …)` from `createEventDispatcher()` with no listener for
    * any `type` it can take: it only evaluates its arguments. Only where its
-   * result goes unused: it returns `true` in the browser, but nothing on the
-   * server.
+   * result goes unused: it returns `true` in the browser, but nothing on
+   * the server.
    */
   function unheardDispatch(node: Node): CallNode | undefined {
     if (
@@ -1057,8 +1057,8 @@ function bump(counts: Map<string, number>, name: string): void {
 
 /**
  * Reads of each name, except `owned` nodes. `propReads` counts `owned`
- * too, but not `export { a }`, which keeps `a` declared without reading
- * it.
+ * too, but not `export { a }`, which keeps `a` declared without
+ * reading it.
  */
 function countReads(
   ast: Node,
@@ -1368,8 +1368,8 @@ function subtractReads(
  * With `drop`, removes unread top-level declarations with pure
  * initializers (Svelte compiles `$:` into effects a minifier must keep)
  * and the unread props `props` accepts, and declares the props no call
- * site passes as plain `let`s; with `silence`, marks the unread props
- * left.
+ * site passes as plain `let`s; with `silence`, marks the unread
+ * props left.
  */
 function cleanUp(
   input: MappedText,

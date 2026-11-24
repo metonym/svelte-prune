@@ -13,8 +13,8 @@ import { readPackageExports } from "./package-exports";
 export class Library extends LibraryPaths {
   readonly root: string;
   /**
-   * Export name -> module key in `srcDir` (`Button` ->
-   * `Button/Button.svelte`).
+   * Export name -> module key in `srcDir` (`Button`
+   * -> `Button/Button.svelte`).
    */
   readonly components: ReadonlyMap<string, string>;
 

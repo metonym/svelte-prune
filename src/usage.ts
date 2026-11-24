@@ -12,8 +12,8 @@ export type CallSite = {
   /** Library module key, relative to its `srcDir`: `Button/Button.svelte`. */
   component: string;
   /**
-   * Every prop and slot is unknown: props are spread, or it's used as a
-   * value.
+   * Every prop and slot is unknown: props are spread, or it's used as
+   * a value.
    */
   open: boolean;
   props: Map<string, Value>;
@@ -117,8 +117,8 @@ export function checkTarget(
 }
 
 /**
- * Content is `children` in Svelte 5, only a slot in 3/4; unknown version,
- * either.
+ * Content is `children` in Svelte 5, only a slot in 3/4; unknown
+ * version, either.
  */
 function propsOf(
   site: CallSite,

@@ -3,8 +3,8 @@
  * in a library's script modules, rewritten for the values the app's live
  * call sites pass: variant keys no call can select go, with the compound
  * variants that need one, and a table nothing calls keeps no classes at
- * all. Strings that never render then neither ship nor reach Tailwind's
- * scanner.
+ * all. Strings that never render then neither ship nor reach
+ * Tailwind's scanner.
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -367,8 +367,8 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
     ...lex(file, codes[i] ?? ""),
   }));
 
-  // Follow the tables through re-exports and imports until nothing new holds
-  // one.
+  // Follow the tables through re-exports and imports until nothing new
+  // holds one.
   const handled = new Set<string>();
   for (let changed = true; changed;) {
     changed = false;
@@ -423,8 +423,8 @@ export async function scanVariantTables(library: Library): Promise<Scan> {
       }
     }
   }
-  // What `import()`, `require()` and `import.meta.glob()` load is read
-  // whole.
+  // What `import()`, `require()` and `import.meta.glob()` load is
+  // read whole.
   for (const [i, file] of files.entries()) {
     const calls = file.endsWith(".svelte")
       ? componentDynamicImports(codes[i] ?? "")
@@ -667,8 +667,8 @@ function watchCalls(
 }
 
 /**
- * Watches the slot calls of `call`'s result; `false` if the result is used
- * otherwise.
+ * Watches the slot calls of `call`'s result; `false` if the result is
+ * used otherwise.
  */
 function watchSlots(
   model: ComponentModel,
@@ -740,8 +740,8 @@ function watchSlots(
 // ---------- rewriting ----------
 
 /**
- * The key `tv()` looks a value up by (`falsyToString`), or `undefined` for
- * none.
+ * The key `tv()` looks a value up by (`falsyToString`), or `undefined`
+ * for none.
  */
 function keyOf(p: Literal): string | undefined {
   if (p === null) return undefined;
@@ -794,8 +794,8 @@ function keptKeys(
 }
 
 /**
- * Whether `actual` matches compound condition `expected`
- * (`matchesCompoundValue`).
+ * Whether `actual` matches compound condition
+ * `expected` (`matchesCompoundValue`).
  */
 function matches(expected: Literal, actual: Primitive): boolean {
   const nullishOrFalse = (v: Primitive) => v == null || v === false;

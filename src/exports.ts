@@ -36,8 +36,8 @@ export type ExportResolver = {
 };
 
 /**
- * Rendering an object with members renders its own component, if it has
- * one.
+ * Rendering an object with members renders its own component, if it
+ * has one.
  */
 export function memberOf(exported: Export, path: readonly string[]): Export {
   let current = exported;
@@ -392,8 +392,8 @@ export function createExportResolver(src: string): ExportResolver {
 
 const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
 /**
- * `export {}`, which the lexer returns as it does a statement it can't
- * read.
+ * `export {}`, which the lexer returns as it does a statement it
+ * can't read.
  */
 const EMPTY_EXPORT = /^export\s*\{\s*\}\s*;?$/;
 

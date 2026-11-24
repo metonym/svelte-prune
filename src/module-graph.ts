@@ -38,8 +38,8 @@ function specifiersOf(code: string): Set<string> {
 
 /**
  * The graph doesn't say which specifier made an edge, so importers are
- * lexed for aliases resolving into the library; those edges carry their
- * `specifier`.
+ * lexed for aliases resolving into the library; those edges carry
+ * their `specifier`.
  */
 export async function libraryImports(
   spec: LibrarySpec,

@@ -24,16 +24,16 @@ export type SveltePruneOptions = {
    * Globs (relative to the project root) of every file that renders the
    * library's components; a module outside them that imports one fails the
    * build. Components imported from script, Markdown, MDX or Astro files
-   * keep every prop value. `node_modules` is skipped unless a pattern names
-   * it.
+   * keep every prop value. `node_modules` is skipped unless a pattern
+   * names it.
    * @default ["src/**\/*.{svelte,svx,md,mdx,astro,js,jsx,ts,tsx,mjs,mts,cjs,cts}"]
    */
   content?: string[];
 
   /**
    * Replace an `{#if}` whose only live branch is known with that branch.
-   * Svelte 5 only: Svelte 3/4 render whitespace differently without the
-   * block.
+   * Svelte 5 only: Svelte 3/4 render whitespace differently without
+   * the block.
    * @default true when the installed Svelte is 5 or later
    */
   unwrap?: boolean;
@@ -43,8 +43,8 @@ export type SveltePruneOptions = {
 
   /**
    * Print what each build rewrote: edits, child components no longer
-   * rendered or bundled, and each call site's prop values. Independent of
-   * `silent`.
+   * rendered or bundled, and each call site's prop values. Independent
+   * of `silent`.
    * @default false
    */
   report?: boolean;
@@ -86,8 +86,8 @@ const usesTailwind = (spec: LibrarySpec, root: string) =>
   spec.tailwind === true && installedMajor("tailwindcss", root) !== undefined;
 
 /**
- * For builds that don't rewrite (development): the library as it is, for
- * Tailwind.
+ * For builds that don't rewrite (development): the library as it is,
+ * for Tailwind.
  */
 export async function writeOriginalsForTailwind(
   spec: LibrarySpec,
@@ -121,8 +121,8 @@ function globContent(patterns: string[], cwd: string): string[] {
 
 /**
  * Virtual modules are JS, so they're lexed too: merely mentioning the
- * package doesn't count. In Markdown, MDX or Astro any import of it
- * counts.
+ * package doesn't count. In Markdown, MDX or Astro any import of
+ * it counts.
  */
 function importsLibrary(
   library: LibraryPaths,
@@ -299,8 +299,8 @@ export function createComponentOptimizer(
   const pruneHydration = options?.hydration === false;
   let build = newBuild(process.cwd());
   /**
-   * Watch rebuilds and SvelteKit's second build reuse it unless `content`
-   * changed.
+   * Watch rebuilds and SvelteKit's second build reuse it unless
+   * `content` changed.
    */
   let last:
     | { hash: string; result: SpecializedComponents | { warning: string } }
@@ -451,8 +451,8 @@ export function createComponentOptimizer(
 
     /**
      * Gives `summary` to the wrapper's `onSummary`, or else logs it with
-     * `log` as a sentence, unless `silent`; a summary of nothing isn't
-     * logged.
+     * `log` as a sentence, unless `silent`; a summary of nothing
+     * isn't logged.
      */
     announce(summary: Summary, log: (line: string) => void): void {
       if (names.onSummary) {
@@ -535,8 +535,8 @@ export function createComponentOptimizer(
     },
 
     /**
-     * Records module `id` if it renders the library without having been
-     * analyzed.
+     * Records module `id` if it renders the library without having
+     * been analyzed.
      */
     check(id: string, code: string): void {
       if (build.sources.size === 0) return;
@@ -554,8 +554,8 @@ export function createComponentOptimizer(
 
     /**
      * A rewritten script module (its tailwind-variants tables) may only be
-     * imported by the library: the analysis reads the app's imports of the
-     * barrel.
+     * imported by the library: the analysis reads the app's imports of
+     * the barrel.
      */
     checkScriptImporters(
       id: string,

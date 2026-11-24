@@ -1,8 +1,8 @@
 import { isSvelteFile, stripQuery } from "./util";
 
 /**
- * How the analysis reads a library's class names: see
- * `LibrarySpec.classTokens`.
+ * How the analysis reads a library's class names:
+ * see `LibrarySpec.classTokens`.
  */
 export type ClassTokens = {
   /** Text that may name a class contains it (`"x--"`). */
@@ -28,8 +28,8 @@ export function isPrefixToken(token: string): boolean {
 }
 
 /**
- * For a library with `styles` and no `classTokens`: every word, as a
- * class.
+ * For a library with `styles` and no `classTokens`: every word, as
+ * a class.
  */
 const PLAIN_CLASS_TOKENS: LibraryClassTokens = {
   marker: "",
@@ -41,8 +41,8 @@ const PLAIN_CLASS_TOKENS: LibraryClassTokens = {
 };
 
 /**
- * How the analysis reads `spec`'s class names, or `undefined` for not at
- * all.
+ * How the analysis reads `spec`'s class names, or `undefined` for not
+ * at all.
  */
 export function classTokensOf(
   spec: LibrarySpec,
@@ -71,8 +71,8 @@ export type LibrarySpec = {
   /** Names the library in messages: `"My Library"`. */
   label: string;
   /**
-   * Names the tool in messages, and starts each warning and error:
-   * `"my-plugin"`.
+   * Names the tool in messages, and starts each warning
+   * and error: `"my-plugin"`.
    */
   tool: string;
   /**
@@ -95,8 +95,8 @@ export type LibrarySpec = {
      */
     stylesheets: readonly string[];
     /**
-     * Classes to keep whatever renders: ones the app's page sets
-     * (`"my-body"`).
+     * Classes to keep whatever renders: ones the app's page
+     * sets (`"my-body"`).
      */
     keep?: readonly string[];
   };
@@ -104,8 +104,8 @@ export type LibrarySpec = {
    * `true` for a library whose classes are Tailwind's: its tailwind-variants
    * tables are rewritten, and with Tailwind installed, every build (the dev
    * server's included) writes what of it can render to
-   * `node_modules/.svelte-prune/<name>`, for Tailwind to scan. @default
-   * false
+   * `node_modules/.svelte-prune/<name>`, for Tailwind to
+   * scan. @default false
    */
   tailwind?: boolean;
 };
@@ -146,8 +146,8 @@ function patternsOf(spec: LibrarySpec): {
   directComponentPath: RegExp;
   contextKey: RegExp;
   /**
-   * A specifier of one of its modules that's neither a component nor a
-   * stylesheet.
+   * A specifier of one of its modules that's neither a component nor
+   * a stylesheet.
    */
   valueSubpath: RegExp;
   /** An import of one of its modules that isn't a component. */
@@ -175,8 +175,8 @@ function patternsOf(spec: LibrarySpec): {
       "g",
     ),
     /**
-     * A specifier of one of its modules that's neither a component nor a
-     * stylesheet.
+     * A specifier of one of its modules that's neither a component nor
+     * a stylesheet.
      */
     valueSubpath: new RegExp(
       `["'\`]${name}\\/(?![^"'\`]*\\.(?:svelte|css)["'\`])`,

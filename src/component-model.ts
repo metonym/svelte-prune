@@ -76,8 +76,8 @@ export type ComponentModel = {
   readonly unknownNames: Set<string>;
   readonly unknownReasons: Map<string, string>;
   /**
-   * Names written only by `name = …` under `if`s in `$:` (see
-   * `withGuardedWrites`).
+   * Names written only by `name = …` under `if`s in `$:`
+   * (see `withGuardedWrites`).
    */
   readonly guardedWrites: Map<string, GuardedWrite[]>;
   /** Local binding -> library module key, for relative `.svelte` imports. */
@@ -85,8 +85,8 @@ export type ComponentModel = {
   readonly otherImports: Set<string>;
   readonly packageImports: Map<string, string>;
   /**
-   * Library objects with component members (`import * as L`,
-   * `Object.assign`).
+   * Library objects with component members
+   * (`import * as L`, `Object.assign`).
    */
   readonly memberImports: Map<string, Export>;
   /** Imported `export const NAME = "…"` strings, for context keys. */
@@ -100,15 +100,15 @@ export type ComponentModel = {
   /** Per `setContext` call: an object literal's properties, or `null`. */
   readonly contextObjects: Map<string, Array<ContextObject | null>>;
   /**
-   * Context properties it may write or hand on (`"*"`: all); see
-   * `readContextUse`.
+   * Context properties it may write or hand on (`"*"`: all);
+   * see `readContextUse`.
    */
   readonly contextLeaks: Map<string, Set<string>>;
   readsUnknownContext: boolean;
   /**
    * Decides whether a literal a name holds stays known (see `Shape`).
-   * `$$props.x` adds `"$$props.x"`, any other `$$props` use `"*"`, both
-   * `full`.
+   * `$$props.x` adds `"$$props.x"`, any other `$$props` use `"*"`,
+   * both `full`.
    */
   readonly escapes: Map<string, Escape>;
   /** `rest` in `let { a, ...rest } = $props()`, unless reassigned. */
@@ -117,8 +117,8 @@ export type ComponentModel = {
 
 /**
  * `full`: the value is mutated, aliased, passed on or has a method called.
- * `paths`: paths read from it (`["[]", "text"]` for `item.text` in
- * `{#each}`).
+ * `paths`: paths read from it (`["[]", "text"]` for `item.text`
+ * in `{#each}`).
  */
 type Escape = { full: boolean; readonly paths: string[][] };
 
@@ -141,8 +141,8 @@ type ContextObject = {
 
 /**
  * A `writable` set only from `$:` and handed on only in a context object,
- * so it holds `initial` or one of `writes`. `readOnly`: handed on as
- * `readonly(s)`.
+ * so it holds `initial` or one of `writes`. `readOnly`: handed on
+ * as `readonly(s)`.
  */
 export type MirroredStore = {
   readonly initial: Expression | null;
@@ -189,8 +189,8 @@ export function loadComponentModel(src: string, key: string): ComponentModel {
 }
 
 /**
- * A `.js` module's mtime is checked once per analysis, not per helper
- * call.
+ * A `.js` module's mtime is checked once per analysis, not per
+ * helper call.
  */
 let analysisCount = 0;
 
@@ -245,8 +245,8 @@ const scriptCache = new Map<
 >();
 
 /**
- * An importer may change any name a `.js` module exports, so those all
- * escape.
+ * An importer may change any name a `.js` module exports, so those
+ * all escape.
  */
 export function loadScriptModel(
   src: string,
@@ -334,8 +334,8 @@ type ModuleImportResolver = (
   | undefined;
 
 /**
- * Only a lone-line `export const name = "…"`, declared once; no
- * re-exports.
+ * Only a lone-line `export const name = "…"`, declared once;
+ * no re-exports.
  */
 function stringExport(
   src: string,
@@ -466,8 +466,8 @@ export function buildComponentModel(
     }
   }
 
-  // Writing identifier -> the name it makes unknown (`$count = 1`:
-  // `$count`).
+  // Writing identifier -> the name it makes unknown
+  // (`$count = 1`: `$count`).
   const writes = new Map<Identifier, string>();
   for (const binding of topLevelBindings(model.scopes)) {
     // `x` in `$: x = …` declares it, so it's no reference; it's a write
@@ -718,8 +718,8 @@ export function propertyName(
 }
 
 /**
- * Whether `node` is what `derived(node, …)` or `derived([…, node], …)`
- * reads.
+ * Whether `node` is what `derived(node, …)` or
+ * `derived([…, node], …)` reads.
  */
 function derivedInput(
   model: ComponentModel,
@@ -1278,8 +1278,8 @@ function declaredByPattern(stack: readonly Node[]): boolean {
 }
 
 /**
- * Array methods the evaluator models, which change nothing they're called
- * on.
+ * Array methods the evaluator models, which change nothing they're
+ * called on.
  */
 export const ARRAY_METHODS: ReadonlySet<string> = new Set([
   "includes",

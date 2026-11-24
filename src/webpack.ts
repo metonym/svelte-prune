@@ -139,8 +139,8 @@ export class SveltePrunePlugin {
   private readonly spec: LibrarySpec;
   private readonly options: SveltePruneOptions | undefined;
   /**
-   * `plugin` also names webpack's hooks; `loader` is the built loader's
-   * path.
+   * `plugin` also names webpack's hooks; `loader` is the built
+   * loader's path.
    */
   private readonly names: PluginNames & { loader: string };
 

@@ -291,8 +291,8 @@ function liveWrites(
 }
 
 /**
- * Widens known objects to some object unless nothing can mutate them (see
- * `ComponentModel.escapes`).
+ * Widens known objects to some object unless nothing can mutate them
+ * (see `ComponentModel.escapes`).
  */
 function keepIfContained(
   value: Value,
@@ -351,8 +351,8 @@ function ownValues(p: Primitive): Value {
 }
 
 /**
- * Binds `{#each}` `node`'s item while its body is walked; returns the
- * unbind.
+ * Binds `{#each}` `node`'s item while its body is walked; returns
+ * the unbind.
  */
 export function bindEach(
   node: Extract<Node, { type: "EachBlock" }>,
@@ -1124,8 +1124,8 @@ let callDepth = 0;
 
 /**
  * Runs `fn` in `callee`, the module declaring it, with `args` read in
- * `caller`. Only `const`, `return`, and `if` around a lone `return` are
- * followed.
+ * `caller`. Only `const`, `return`, and `if` around a lone `return`
+ * are followed.
  */
 function callValue(
   fn: FunctionNode,

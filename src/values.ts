@@ -1,16 +1,16 @@
 // Each expression is a small set of possible primitives, or `UNKNOWN`.
-// When in doubt widen to `UNKNOWN`, which keeps every branch it guards
-// alive.
+// When in doubt widen to `UNKNOWN`, which keeps every branch it
+// guards alive.
 
 /**
- * Some object, array, or function: truthy, never nullish, never `===` a
- * primitive.
+ * Some object, array, or function: truthy, never nullish, never `===`
+ * a primitive.
  */
 export const OBJECT: unique symbol = Symbol("object");
 
 /**
- * A `[]` nothing mutates or lets escape: `OBJECT`, but to `.length` and
- * `{#each}`.
+ * A `[]` nothing mutates or lets escape: `OBJECT`, but to `.length`
+ * and `{#each}`.
  */
 export const EMPTY_ARRAY: unique symbol = Symbol("empty array");
 
@@ -112,8 +112,8 @@ export function isStructured(p: Primitive): p is typeof EMPTY_ARRAY | Shape {
 
 export const MAX_SHAPE_SIZE = 32;
 /**
- * Interned caches clear past this many, so watch rebuilds don't grow them
- * forever.
+ * Interned caches clear past this many, so watch rebuilds don't grow
+ * them forever.
  */
 const MAX_INTERNED = 10_000;
 const shapes = new Map<string, Shape>();
@@ -293,8 +293,8 @@ export function binary(operator: string, a: Value, b: Value): Value {
 }
 
 /**
- * Some object may be a function, so it reads as `"object"` or
- * `"function"`.
+ * Some object may be a function, so it reads as `"object"`
+ * or `"function"`.
  */
 export function typeOf(value: Value): Value {
   return flatMap(value, (p) => {

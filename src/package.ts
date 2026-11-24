@@ -37,8 +37,8 @@ function resolveWithPnp(name: string, from: string): string | undefined {
 
 /**
  * Searches from `from`, then from this package (hoisted in a monorepo).
- * Walks `require.resolve.paths`: an `exports` map may block
- * `<name>/package.json`.
+ * Walks `require.resolve.paths`: an `exports` map may
+ * block `<name>/package.json`.
  */
 function resolvePackageDir(
   name: string,
@@ -95,8 +95,8 @@ function readVersion(root: string): unknown {
 }
 
 /**
- * A linked checkout (`bun link`, `workspace:`) changes under a fixed
- * version.
+ * A linked checkout (`bun link`, `workspace:`) changes under a
+ * fixed version.
  */
 const isLinked = (real: string) =>
   !real.split(path.sep).includes("node_modules");

@@ -55,8 +55,8 @@ async function sourcesFor(
   rewrite: Rewrite | undefined,
 ): Promise<Map<string, string>> {
   const src = realpath(library.src) ?? library.src;
-  // A script module that mounts a component renders it where no call site
-  // shows.
+  // A script module that mounts a component renders it where no call
+  // site shows.
   const everyComponent =
     !rewrite || (await scriptRendersComponents(library)) !== undefined;
   const files = new Map<string, string>();
@@ -114,8 +114,8 @@ async function sync(dir: string, files: ReadonlyMap<string, string>) {
 }
 
 /**
- * Writes the library for Tailwind to scan; every module as it is without
- * `rewrite`.
+ * Writes the library for Tailwind to scan; every module as it is
+ * without `rewrite`.
  */
 export async function writeTailwindSources(
   library: Library,

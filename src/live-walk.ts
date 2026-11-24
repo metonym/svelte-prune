@@ -57,8 +57,8 @@ type Walk = LiveResult & {
 };
 
 /**
- * An attribute's `{expression}` as text: nothing for `null` and
- * `undefined`.
+ * An attribute's `{expression}` as text: nothing for `null`
+ * and `undefined`.
  */
 function attributeText(value: Value): Value {
   return flatMap(value, (p) =>
@@ -308,8 +308,8 @@ function elementSite(
 /**
  * `undefined` for a local tag (snippet parameter, `{@const}`) or another
  * package's component: one that imports the library must be in `content`
- * (the plugins check), so its call sites are read there. Throws when
- * untraceable.
+ * (the plugins check), so its call sites are read there. Throws
+ * when untraceable.
  */
 function componentKey(
   name: string,
@@ -350,8 +350,8 @@ export type SiteReader = {
   explain: Explain;
   instance: (expression: Expression) => Set<string> | null;
   /**
-   * Whether a bare `on:event` passes on to a listener of the component it's
-   * in.
+   * Whether a bare `on:event` passes on to a listener of the component
+   * it's in.
    */
   forwards: (event: string) => boolean;
 };
@@ -414,8 +414,8 @@ function readContent(fragment: AST.Fragment): {
   for (const child of fragment.nodes) {
     if (child.type === "Comment") continue;
     if (child.type === "Text" && WHITESPACE_ONLY.test(child.data)) continue;
-    // A snippet is a prop by its name and fills that slot (`children` the
-    // default).
+    // A snippet is a prop by its name and fills that slot (`children`
+    // the default).
     if (child.type === "SnippetBlock") {
       const { name } = child.expression;
       snippets.push(name);
@@ -466,8 +466,8 @@ function attributeWhy(
 }
 
 /**
- * Members of an instance that set no props: Svelte 3/4's `$destroy` and
- * `$on`.
+ * Members of an instance that set no props: Svelte 3/4's `$destroy`
+ * and `$on`.
  */
 const INSTANCE_METHODS = new Set(["$destroy", "$on"]);
 

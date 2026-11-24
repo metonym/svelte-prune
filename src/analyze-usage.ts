@@ -84,8 +84,8 @@ type LibrarySources = {
   /** The same, per script module. */
   scriptTokensOf: Map<string, Set<string>>;
   /**
-   * Which modules import which, read on first use: only pruning styles needs
-   * it.
+   * Which modules import which, read on first use: only pruning styles
+   * needs it.
    */
   graph: () => LibraryModules;
   componentContexts: Set<string>;
@@ -188,8 +188,8 @@ export async function scanLibrarySources(
     }
     if (!SET_OTHER_CONTEXT.test(code)) continue;
     // A module's own model reads keys held in constants, local or
-    // imported; any it can't read make it provide every key
-    // (`providesUnknownContext`).
+    // imported; any it can't read make it provide every
+    // key (`providesUnknownContext`).
     const model = isScript
       ? loadScriptModel(src, file)
       : loadComponentModel(src, file);
@@ -205,8 +205,8 @@ export async function scanLibrarySources(
 
 type LibraryModules = {
   /**
-   * Each module's static imports and re-exports of the library's own
-   * modules.
+   * Each module's static imports and re-exports of the library's
+   * own modules.
    */
   imports: Map<string, Set<string>>;
   /**

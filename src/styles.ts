@@ -123,13 +123,13 @@ function unquote(text: string): string {
 /** What may read a custom property or `@keyframes` from outside the CSS. */
 type ExternalReads = {
   /**
-   * Words (`[\w-]+`, `--x` included) in the app's files and the library's
-   * sources.
+   * Words (`[\w-]+`, `--x` included) in the app's files and the
+   * library's sources.
    */
   words: Set<string>;
   /**
-   * Custom property prefixes a source builds names from (`--tone-` in
-   * `` `--tone-${t}` ``).
+   * Custom property prefixes a source builds names from (`--tone-`
+   * in `` `--tone-${t}` ``).
    */
   propertyPrefixes: string[];
 };
@@ -387,8 +387,8 @@ export function libraryStylePruner(input: {
     }
   }
   // Only a class the library's tokens can name may go: a class they never
-  // read (one outside `classTokens`' namespace) is never known not to
-  // render.
+  // read (one outside `classTokens`' namespace) is never known not
+  // to render.
   const readable = (cls: string) =>
     cls.includes(tokens.marker) && tokens.text(cls).includes(`.${cls}`);
   const safelist = input.safelist ?? [];

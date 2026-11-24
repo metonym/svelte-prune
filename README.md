@@ -35,8 +35,8 @@ CSS is Tailwind's output for the Tailwind libraries
 ([Tailwind](#tailwind)) and the library's own stylesheet for Carbon
 and sveltestrap ([Stylesheets](#stylesheets)).
 Libraries whose markup branches on their props gain the most,
-and so do those whose tailwind-variants tables hold every variant's
-classes.
+and so do those whose tailwind-variants tables hold every
+variant's classes.
 Headless libraries that keep their state in classes
 or hand their props to a state machine leave little to fold.
 
@@ -54,8 +54,8 @@ bun i -d svelte-prune
 
 Each diff is the library component as svelte-prune rewrites it for the
 app in its first comment
-(Svelte 5 output; on Svelte 3 and 4 a live branch keeps its `{#if true}`
-wrapper).
+(Svelte 5 output; on Svelte 3 and 4 a live branch keeps its
+`{#if true}` wrapper).
 
 **Branches that can't render, and the components only they render.**
 `Icon` is no longer bundled:
@@ -260,30 +260,30 @@ It adds a loader that runs before `svelte-loader` on `.svelte` files.
 ### Tailwind
 
 Tailwind generates a utility for every class string it scans,
-and a library's setup has it scan the package
-(`@source "../node_modules/my-library/dist"`).
+and a library's setup has it scan the
+package (`@source "../node_modules/my-library/dist"`).
 For a library with `tailwind: true` in its
 [`LibrarySpec`](#libraryspec), and with Tailwind installed,
 every build writes what of the library can render to
-`node_modules/.svelte-prune/<name>`:
-every file but the components that can't render,
-as svelte-prune rewrote them (components and tailwind-variants tables).
+`node_modules/.svelte-prune/<name>`: every file but the components that
+can't render, as svelte-prune rewrote them
+(components and tailwind-variants tables).
 Scan that instead, with Tailwind v4's `@source`:
 
 ```css
 @source "../node_modules/.svelte-prune/my-library";
 ```
 
-or a Tailwind v3 `content` glob:
-`"./node_modules/.svelte-prune/my-library/**/*.{svelte,js}"`.
+or a Tailwind v3 `content`
+glob: `"./node_modules/.svelte-prune/my-library/**/*.{svelte,js}"`.
 The dev server and development builds write the library as it is,
 so their CSS has every class.
 
 ### Stylesheets
 
 A library that ships its own CSS
-(Carbon's `css/white.css`, Bootstrap for sveltestrap) can name it in
-`styles`:
+(Carbon's `css/white.css`, Bootstrap for sveltestrap) can name it
+in `styles`:
 
 ```ts
 const library = {
@@ -362,8 +362,8 @@ On the example pages, on top of svelte-prune, gzipped:
 Each page behaves identically in Chromium both ways.
 A build whose output can still reach `hydrate()` fails:
 SvelteKit with SSR, `hydrate` imported from `svelte`,
-or a class component from `svelte/legacy`
-(`new App({ hydrate: true })`).
+or a class component from
+`svelte/legacy` (`new App({ hydrate: true })`).
 Svelte 3 and 4 bundle hydration code only for components compiled with
 `hydratable`, so they ignore it, with a warning.
 So does the webpack plugin: webpack bundles Svelte's custom element
@@ -410,8 +410,8 @@ Put it before the Svelte plugin.
   add it only to production configs there.
 - `buildStart` reads `content`, resolving aliased `.svelte` imports
   (`$lib/Card.svelte`) with the bundler.
-  A watch rebuild where nothing in `content` changed reuses the last
-  analysis.
+  A watch rebuild where nothing in `content` changed reuses the
+  last analysis.
 - `load` serves the rewritten components, with source maps;
   `transform` and `buildEnd` check the module graph and fail the build
   when a module the analysis didn't read imports the library
@@ -577,9 +577,9 @@ Every message starts with `` `${tool}:` ``.
     tailwind-variants tables were rewritten
     (through an alias, for example): import them from the package name.
 - **Error** with `hydration: false`, when the output can still call
-  `hydrate()`
-  (SvelteKit with SSR, `hydrate` from `svelte`, a class component from
-  `svelte/legacy`): mount the app with `mount()`, or remove the option.
+  `hydrate()` (SvelteKit with SSR, `hydrate` from `svelte`, a class
+  component from `svelte/legacy`): mount the app with `mount()`,
+  or remove the option.
 
 ## What it reads
 
@@ -684,8 +684,8 @@ and is rendered with any props wherever it can't see the call site:
   imported dynamically or through an alias,
   or rendered from a file outside `content` keeps every variant.
   The plugins check the bundler's module graph after the build
-  and fail it when a module the analysis didn't read imports the
-  library.
+  and fail it when a module the analysis didn't read imports
+  the library.
 - A component whose props something other than a call site can set keeps
   every value: a custom element, or one bound with `bind:this` whose
   instance the app uses for more than calling what it exports
