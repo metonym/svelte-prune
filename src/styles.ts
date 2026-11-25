@@ -143,10 +143,19 @@ const WORD = /[\w-]+/g;
  */
 const BUILT_PROPERTY = /(?<![\w!-])(--[\w-]*)(?:\$\{|["'`]\s*\+)/g;
 
+// `--tone-` as the name `setProperty` or `removeProperty` takes: a
+// property a script only sets inline needs no declaration, since the
+// inline value stands alone and any read keeps the declaration anyway.
+// Matches minified code too (`"--tone-"+t`).
+const WRITTEN_PROPERTY = /\.(?:set|remove)Property\(\s*[`'"](--[\w-]*)/g;
+
 /** Adds what `code` may read to `into`. */
 function readsIn(code: string, into: ExternalReads): void {
-  for (const [word] of code.matchAll(WORD)) into.words.add(word);
-  for (const [, prefix] of code.matchAll(BUILT_PROPERTY)) {
+  const reads = code.replace(WRITTEN_PROPERTY, (write: string, name: string) =>
+    write.slice(0, -name.length),
+  );
+  for (const [word] of reads.matchAll(WORD)) into.words.add(word);
+  for (const [, prefix] of reads.matchAll(BUILT_PROPERTY)) {
     if (prefix !== undefined) into.propertyPrefixes.push(prefix);
   }
 }
