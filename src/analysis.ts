@@ -272,7 +272,7 @@ export function formatPropAwareReport(
   root: string,
 ): string[] {
   return [
-    "  Prop-aware:",
+    "  Props the app passes:",
     ...formatCallSites(result, root),
     `    Classes pruned by props: ${prunedClasses.size}`,
   ];
